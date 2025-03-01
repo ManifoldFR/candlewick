@@ -48,11 +48,14 @@ public:
     return *ptr;
   }
 
-  template <typename T> T &getAttribute(const Uint64 vertexId, size_t attrLoc) {
-    SDL_assert(attrLoc < m_layout.numAttributes());
-    const auto &attr = m_layout.vertex_attributes[attrLoc];
-    SDL_assert(attr.location == attrLoc);
-    return this->getAttribute<T>(vertexId, attr);
+  template <typename T>
+  T &getAttribute(const Uint64 vertexId, VertexAttrib loc) {
+    auto attr = m_layout.getAttribute(loc);
+    if (!attr) {
+      throw std::runtime_error("Vertex attribute " +
+                               std::to_string(Uint16(loc)) + "not found.");
+    }
+    return this->getAttribute<T>(vertexId, *attr);
   }
 
   /// \brief Raw ptr to underlying data.

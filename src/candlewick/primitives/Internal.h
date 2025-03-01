@@ -10,10 +10,11 @@ struct alignas(16) PosOnlyVertex {
 };
 
 template <> struct VertexTraits<PosOnlyVertex> {
-  static auto layout() {
+  static constexpr auto layout() {
     return MeshLayout{}
         .addBinding(0, sizeof(PosOnlyVertex))
-        .addAttribute("pos", 0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Position, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(PosOnlyVertex, pos));
   }
 };
@@ -24,12 +25,14 @@ struct alignas(16) PosNormalVertex {
 };
 
 template <> struct VertexTraits<PosNormalVertex> {
-  static auto layout() {
+  static constexpr auto layout() {
     return MeshLayout{}
         .addBinding(0, sizeof(PosNormalVertex))
-        .addAttribute("pos", 0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Position, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(PosNormalVertex, pos))
-        .addAttribute("normal", 1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Normal, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(PosNormalVertex, normal));
   }
 };

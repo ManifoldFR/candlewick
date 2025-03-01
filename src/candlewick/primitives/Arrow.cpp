@@ -74,10 +74,11 @@ MeshData loadArrowSolid(bool include_normals, float shaft_length,
       interleaveAttributes(arrow_data, include_normals);
   MeshLayout layout;
   layout.addBinding(0, include_normals ? 32u : 16u);
-  layout.addAttribute("pos", 0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, 0);
+  layout.addAttribute(VertexAttrib::Position, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, 0);
   if (include_normals)
-    layout.addAttribute("normal", 1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                        16u);
+    layout.addAttribute(VertexAttrib::Normal, 0,
+                        SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, 16u);
   return MeshData{SDL_GPU_PRIMITIVETYPE_TRIANGLELIST, layout,
                   std::move(vertexData), std::move(arrow_data.indices)};
 }

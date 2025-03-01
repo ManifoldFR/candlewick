@@ -19,7 +19,6 @@ add_library(
   candlewick/core/errors.cpp
   candlewick/core/GuiSystem.cpp
   candlewick/core/Mesh.cpp
-  candlewick/core/MeshLayout.cpp
   candlewick/core/Renderer.cpp
   candlewick/core/Shader.cpp
   candlewick/core/Texture.cpp

@@ -10,7 +10,7 @@ bool operator==(const DefaultVertex &lhs, const DefaultVertex &rhs) {
 }
 
 GTEST_TEST(TestErasedBlob, default_vertex) {
-  auto layout = meshLayoutFor<DefaultVertex>();
+  constexpr auto layout = meshLayoutFor<DefaultVertex>();
   EXPECT_TRUE(layout == layout);
   std::vector<DefaultVertex> vertexData;
   Uint64 size = 10;
@@ -27,9 +27,12 @@ GTEST_TEST(TestErasedBlob, default_vertex) {
 
   for (Uint64 i = 0; i < size; i++) {
     EXPECT_TRUE(view[i] == vertexData[i]);
-    EXPECT_TRUE(vertexData[i].pos == blob.getAttribute<Float3>(i, 0));
-    EXPECT_TRUE(vertexData[i].normal == blob.getAttribute<Float3>(i, 1));
-    EXPECT_TRUE(vertexData[i].color == blob.getAttribute<Float4>(i, 2));
+    EXPECT_TRUE(vertexData[i].pos ==
+                blob.getAttribute<Float3>(i, VertexAttrib::Position));
+    EXPECT_TRUE(vertexData[i].normal ==
+                blob.getAttribute<Float3>(i, VertexAttrib::Normal));
+    EXPECT_TRUE(vertexData[i].color ==
+                blob.getAttribute<Float4>(i, VertexAttrib::Color0));
   }
 }
 
@@ -42,14 +45,17 @@ static_assert(IsVertexType<CustomVertex>, "Invalid vertex type.");
 
 namespace candlewick {
 template <> struct VertexTraits<CustomVertex> {
-  static auto layout() {
+  static constexpr auto layout() {
     return MeshLayout{}
         .addBinding(0, sizeof(CustomVertex))
-        .addAttribute("pos", 0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+        .addAttribute(VertexAttrib::Position, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
                       offsetof(CustomVertex, pos))
-        .addAttribute("color", 1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Color0, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(CustomVertex, color))
-        .addAttribute("uv", 2, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+        .addAttribute(VertexAttrib::TexCoord0, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
                       offsetof(CustomVertex, uv));
   }
 };
@@ -60,7 +66,7 @@ bool operator==(const CustomVertex &lhs, const CustomVertex &rhs) {
 }
 
 GTEST_TEST(TestErasedBlob, custom_vertex) {
-  auto layout = meshLayoutFor<CustomVertex>();
+  constexpr auto layout = meshLayoutFor<CustomVertex>();
   EXPECT_TRUE(layout == layout);
   EXPECT_TRUE(layout != meshLayoutFor<DefaultVertex>());
   EXPECT_EQ(sizeof(CustomVertex), layout.vertexSize());
@@ -79,9 +85,12 @@ GTEST_TEST(TestErasedBlob, custom_vertex) {
 
   for (Uint64 i = 0; i < size; i++) {
     EXPECT_TRUE(view[i] == vertexData[i]);
-    EXPECT_TRUE(vertexData[i].pos == blob.getAttribute<Float4>(i, 0));
-    EXPECT_TRUE(vertexData[i].color == blob.getAttribute<Float3>(i, 1));
-    EXPECT_TRUE(vertexData[i].uv == blob.getAttribute<Float2>(i, 2));
+    EXPECT_TRUE(vertexData[i].pos ==
+                blob.getAttribute<Float4>(i, VertexAttrib ::Position));
+    EXPECT_TRUE(vertexData[i].color ==
+                blob.getAttribute<Float3>(i, VertexAttrib::Color0));
+    EXPECT_TRUE(vertexData[i].uv ==
+                blob.getAttribute<Float2>(i, VertexAttrib::TexCoord0));
   }
 }
 

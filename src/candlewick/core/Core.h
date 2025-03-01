@@ -9,7 +9,7 @@ struct Device;
 struct Texture;
 class Mesh;
 class MeshView;
-struct MeshLayout;
+class MeshLayout;
 struct Shader;
 struct Renderer;
 struct Window;

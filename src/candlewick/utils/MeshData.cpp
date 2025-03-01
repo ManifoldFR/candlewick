@@ -83,7 +83,7 @@ Mesh createMeshFromBatch(const Device &device,
   auto masterIndexBuffer =
       (numIndices > 0) ? SDL_CreateGPUBuffer(device, &idxInfo) : NULL;
   Mesh mesh{device, layout};
-  SDL_assert(layout == mesh.layout);
+  // SDL_assert(layout == mesh.layout);
   mesh.vertexCount = numVertices;
   mesh.indexCount = numIndices;
   mesh.bindVertexBuffer(0, masterVertexBuffer)

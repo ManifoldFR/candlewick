@@ -11,7 +11,7 @@ void apply3DTransformInPlace(MeshData &meshData, const Eigen::Affine3f &tr) {
   const MeshLayout &layout = meshData.layout();
   auto &vertexData = meshData.vertexData;
 
-  if (auto posAttr = layout.lookupAttributeByName("pos")) {
+  if (auto posAttr = layout.getAttribute(VertexAttrib::Position)) {
     for (Uint64 i = 0; i < meshData.numVertices(); i++) {
       Float3 &pos = vertexData.getAttribute<Float3>(i, *posAttr);
       pos = tr * pos;
@@ -19,14 +19,14 @@ void apply3DTransformInPlace(MeshData &meshData, const Eigen::Affine3f &tr) {
   }
 
   Eigen::Matrix3f normalMatrix = tr.linear().inverse().transpose();
-  if (auto normAttr = layout.lookupAttributeByName("normal")) {
+  if (auto normAttr = layout.getAttribute(VertexAttrib::Normal)) {
     for (Uint64 i = 0; i < meshData.numVertices(); i++) {
       Float3 &normal = vertexData.getAttribute<Float3>(i, *normAttr);
       normal.applyOnTheLeft(normalMatrix);
     }
   }
 
-  if (auto tangAttr = layout.lookupAttributeByName("tangent")) {
+  if (auto tangAttr = layout.getAttribute(VertexAttrib::Tangent)) {
     for (Uint64 i = 0; i < meshData.numVertices(); i++) {
       Float3 &tang = vertexData.getAttribute<Float3>(i, *tangAttr);
       tang.applyOnTheLeft(normalMatrix);

@@ -97,9 +97,9 @@ int main() {
 
   MeshLayout mesh_layout;
   mesh_layout.addBinding(0, sizeof(Vertex))
-      .addAttribute("pos", 0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                    offsetof(Vertex, pos))
-      .addAttribute("col", 1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+      .addAttribute(VertexAttrib::Position, 0,
+                    SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, offsetof(Vertex, pos))
+      .addAttribute(VertexAttrib::Color0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
                     offsetof(Vertex, col));
 
   SDL_GPUBufferCreateInfo buffer_desc{.usage = SDL_GPU_BUFFERUSAGE_VERTEX,

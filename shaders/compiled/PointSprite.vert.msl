@@ -21,7 +21,7 @@ struct main0_out
 struct main0_in
 {
     float3 position [[attribute(0)]];
-    float4 color [[attribute(1)]];
+    float4 color [[attribute(4)]];
 };
 
 static inline __attribute__((always_inline))

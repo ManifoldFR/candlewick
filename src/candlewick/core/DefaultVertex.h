@@ -14,16 +14,20 @@ struct alignas(16) DefaultVertex {
 static_assert(IsVertexType<DefaultVertex>, "");
 
 template <> struct VertexTraits<DefaultVertex> {
-  static auto layout() {
+  static constexpr auto layout() {
     return MeshLayout{}
         .addBinding(0, sizeof(DefaultVertex))
-        .addAttribute("pos", 0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Position, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(DefaultVertex, pos))
-        .addAttribute("normal", 1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Normal, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(DefaultVertex, normal))
-        .addAttribute("color", 2, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+        .addAttribute(VertexAttrib::Color0, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
                       offsetof(DefaultVertex, color))
-        .addAttribute("tangent", 3, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        .addAttribute(VertexAttrib::Tangent, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
                       offsetof(DefaultVertex, tangent));
   }
 };

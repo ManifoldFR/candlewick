@@ -17,7 +17,7 @@ struct main0_out
 struct main0_in
 {
     float3 position [[attribute(0)]];
-    float4 color [[attribute(1)]];
+    float4 color [[attribute(4)]];
 };
 
 vertex main0_out main0(main0_in in [[stage_in]], constant UniformBlock& _19 [[buffer(0)]])

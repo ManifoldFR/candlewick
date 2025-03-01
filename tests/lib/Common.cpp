@@ -100,7 +100,7 @@ MeshData loadCube(float size, const Float2 &loc) {
   tr.setIdentity();
   tr.translate(Float3{loc[0], loc[1], 0.f});
   tr.scale(0.5f * size);
-  tr.translate(Float3{0, 0, 1.2});
+  tr.translate(Float3{0, 0, 1.2f});
   apply3DTransformInPlace(m, tr);
   return m;
 }
