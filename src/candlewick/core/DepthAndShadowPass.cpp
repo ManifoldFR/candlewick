@@ -144,7 +144,7 @@ void renderDepthOnlyPass(CommandBuffer &cmdBuf, const DepthPassInfo &passInfo,
   assert(passInfo.pipeline);
   SDL_BindGPUGraphicsPipeline(render_pass, passInfo.pipeline);
 
-  GpuMat4 mvp;
+  Mat4f mvp;
   for (auto &cs : castables) {
     auto &[ent, mesh, tr] = cs;
     assert(validateMesh(mesh));
