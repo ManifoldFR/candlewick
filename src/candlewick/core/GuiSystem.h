@@ -5,23 +5,23 @@
 namespace candlewick {
 
 class GuiSystem {
-  Renderer const *_renderer;
+  Renderer const *m_renderer;
+  bool m_initialized = false;
 
 public:
   using GuiBehavior = std::function<void(const Renderer &)>;
 
   GuiSystem(NoInitT, GuiBehavior behav)
-      : _renderer(nullptr), _callback(behav) {}
+      : m_renderer(nullptr), _callback(behav) {}
   GuiSystem(const Renderer &renderer, GuiBehavior behav);
 
   bool init(const Renderer &renderer);
   void render(CommandBuffer &cmdBuf);
   void release();
 
-  GuiBehavior _callback;
+  bool initialized() const { return m_initialized; }
 
-private:
-  bool _initialized = false;
+  GuiBehavior _callback;
 };
 
 } // namespace candlewick
