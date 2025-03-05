@@ -7,6 +7,8 @@
 #include <vector>
 #include <span>
 #include <SDL3/SDL_assert.h>
+#include <entt/entity/registry.hpp>
+#include <entt/entity/handle.hpp>
 
 namespace candlewick {
 
@@ -53,11 +55,11 @@ public:
 ///
 /// \sa MeshView
 class Mesh {
-  SDL_GPUDevice *_device{nullptr};
-  std::vector<MeshView> _views;
+  SDL_GPUDevice *m_device{nullptr};
+  std::vector<MeshView> m_views;
 
 public:
-  MeshLayout layout;
+  entt::handle layoutHandle;
   Uint32 vertexCount;
   Uint32 indexCount{0u};
 
@@ -75,7 +77,9 @@ public:
   /// commands are issued.
   SDL_GPUBuffer *indexBuffer{nullptr};
 
-  explicit Mesh(const Device &device, const MeshLayout &layout);
+  explicit Mesh(const Device &device, const entt::handle &layout);
+
+  const MeshLayout &layout() const { return layoutHandle.get<MeshLayout>(); }
 
   Mesh(NoInitT);
   Mesh(const Mesh &) = delete;
@@ -84,9 +88,9 @@ public:
   Mesh &operator=(const Mesh &) = delete;
   Mesh &operator=(Mesh &&other) noexcept;
 
-  const MeshView &view(size_t i) const { return _views[i]; }
-  std::span<const MeshView> views() const { return _views; }
-  size_t numViews() const { return _views.size(); }
+  const MeshView &view(size_t i) const { return m_views[i]; }
+  std::span<const MeshView> views() const { return m_views; }
+  size_t numViews() const { return m_views.size(); }
 
   /// \brief Add a stored MeshView object. The added view will be drawn when
   /// calling Renderer::draw() with a Mesh argument.
@@ -115,7 +119,9 @@ public:
   Mesh &setIndexBuffer(SDL_GPUBuffer *buffer);
 
   /// \brief Number of vertex buffers.
-  Uint32 numVertexBuffers() const { return layout.numBuffers(); }
+  Uint32 numVertexBuffers() const {
+    return static_cast<Uint32>(vertexBuffers.size());
+  }
 
   bool isIndexed() const { return indexBuffer != nullptr; }
 
@@ -136,7 +142,7 @@ public:
 /// "indexed/non-indexed" status.
 /// \sa validateMeshView()
 [[nodiscard]] inline bool validateMesh(const Mesh &mesh) {
-  if (!validateMeshLayout(mesh.layout))
+  if (!validateMeshLayout(mesh.layout()))
     return false;
   if (mesh.views().size() == 0)
     return false;
