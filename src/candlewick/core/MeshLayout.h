@@ -145,7 +145,7 @@ public:
     };
   }
 
-  constexpr bool operator==(const MeshLayout &other) const {
+  constexpr bool operator==(const MeshLayout &other) const noexcept {
     if (m_bindingCount != other.m_bindingCount &&
         m_attrCount != other.m_attrCount)
       return false;
