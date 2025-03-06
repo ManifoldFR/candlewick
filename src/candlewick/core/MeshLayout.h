@@ -66,9 +66,11 @@ enum class VertexAttrib : Uint16 {
   TexCoord1,
 };
 
-/// \brief Struct which defines the layout of a mesh's vertices.
+/// \brief This class defines the layout of a mesh's vertices.
 ///
-/// This is used to build both rasterization pipeline create a Mesh.
+/// This is used to build both rasterization pipeline and create Mesh objects.
+/// Due to its large size, we store these objects in centralized storage and
+/// hand out handles to them.
 /// \sa Mesh
 /// \sa MeshData
 class MeshLayout {
