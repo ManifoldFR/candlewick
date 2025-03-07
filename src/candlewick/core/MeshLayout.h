@@ -103,7 +103,10 @@ public:
 
   constexpr MeshLayout()
       : m_bindingCount(0), m_attrCount(0), m_bufferDescs{}, m_attrs{},
-        m_totalVertexSize(0) {}
+        m_totalVertexSize(0) {
+    SDL_zero(m_bufferDescs);
+    SDL_zero(m_attrs);
+  }
 
   /// \brief Add a binding (i.e. a vertex binding) for the mesh.
   ///
@@ -158,13 +161,17 @@ public:
   /// pipelines.
   /// \warning The data here only references data internal to MeshLayout and
   /// *not* copied. It must stay in scope until the pipeline is created.
-  SDL_GPUVertexInputState toVertexInputState() const {
+  SDL_GPUVertexInputState toVertexInputState() const noexcept {
     return {
         m_bufferDescs,
         m_bindingCount,
         m_attrs,
         m_attrCount,
     };
+  }
+
+  operator SDL_GPUVertexInputState() const noexcept {
+    return toVertexInputState();
   }
 
   constexpr bool operator==(const MeshLayout &other) const noexcept {
