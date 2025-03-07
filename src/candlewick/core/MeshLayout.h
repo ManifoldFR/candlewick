@@ -103,10 +103,7 @@ public:
 
   constexpr MeshLayout()
       : m_bindingCount(0), m_attrCount(0), m_bufferDescs{}, m_attrs{},
-        m_totalVertexSize(0) {
-    SDL_zero(m_bufferDescs);
-    SDL_zero(m_attrs);
-  }
+        m_totalVertexSize(0) {}
 
   /// \brief Add a binding (i.e. a vertex binding) for the mesh.
   ///
