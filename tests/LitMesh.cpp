@@ -101,7 +101,7 @@ int main() {
   SDL_GPUGraphicsPipelineCreateInfo pipeline_desc{
       .vertex_shader = vertexShader,
       .fragment_shader = fragmentShader,
-      .vertex_input_state = meshes[0].layout.toVertexInputState(),
+      .vertex_input_state = meshes[0].layout(),
       .primitive_type = meshDatas[0].primitiveType,
       .rasterizer_state{.fill_mode = SDL_GPU_FILLMODE_FILL,
                         .cull_mode = SDL_GPU_CULLMODE_NONE,

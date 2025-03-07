@@ -22,7 +22,7 @@ std::tuple<entt::entity, DebugMeshComponent &> DebugScene::addTriad() {
   for (size_t i = 0; i < 3; i++) {
     triad_colors[i] = triad_datas[i].material.baseColor;
   }
-  setupPipelines(triad.layout);
+  setupPipelines(triad.layout());
   auto entity = _registry.create();
   auto &item = _registry.emplace<DebugMeshComponent>(
       entity, DebugPipelines::TRIANGLE_FILL, std::move(triad), triad_colors);
@@ -36,7 +36,7 @@ DebugScene::addLineGrid(std::optional<Float4> color) {
   Mesh grid = createMesh(device(), grid_data, true);
   GpuVec4 grid_color = color.value_or(grid_data.material.baseColor);
 
-  setupPipelines(grid.layout);
+  setupPipelines(grid.layout());
   auto entity = _registry.create();
   auto &item = _registry.emplace<DebugMeshComponent>(
       entity, DebugPipelines::LINE, std::move(grid), std::vector{grid_color});

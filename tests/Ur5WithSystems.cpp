@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
   robot_debug.addFrameVelocityArrow(debug_scene, ee_frame_id);
 
   auto depthPassInfo =
-      DepthPassInfo::create(renderer, plane_obj.mesh.layout, NULL,
+      DepthPassInfo::create(renderer, plane_obj.mesh.layout(), NULL,
                             {SDL_GPU_CULLMODE_NONE, 0.05f, 0.f, true, false});
   auto &shadowPassInfo = robot_scene.shadowPass;
   auto shadowDebugPass =

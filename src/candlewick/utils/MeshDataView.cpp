@@ -3,9 +3,8 @@
 namespace candlewick {
 
 MeshDataView::MeshDataView(const MeshData &meshData)
-    : primitiveType(meshData.primitiveType), layout(meshData.layout()),
-      vertexData(meshData.vertexData.data(),
-                 meshData.numVertices() * layout.vertexSize()),
+    : primitiveType(meshData.primitiveType), layout(meshData.layout),
+      vertexData(meshData.data(), meshData.numVertices() * layout.vertexSize()),
       indexData(meshData.indexData) {}
 
 MeshDataView::MeshDataView(SDL_GPUPrimitiveType primitiveType,

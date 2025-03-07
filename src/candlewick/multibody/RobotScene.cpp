@@ -117,7 +117,7 @@ RobotScene::RobotScene(entt::registry &registry, const Renderer &renderer,
     assert(validateMesh(mesh));
 
     // local copy for use
-    const auto layout = mesh.layout;
+    const auto layout = mesh.layout();
 
     // add entity for this geometry
     entt::entity entity = registry.create();
@@ -425,7 +425,7 @@ SDL_GPUGraphicsPipeline *RobotScene::createPipeline(
   SDL_GPUGraphicsPipelineCreateInfo desc{
       .vertex_shader = vertexShader,
       .fragment_shader = fragmentShader,
-      .vertex_input_state = layout.toVertexInputState(),
+      .vertex_input_state = layout,
       .primitive_type = getPrimitiveTopologyForType(type),
       .depth_stencil_state{
           .compare_op = depth_compare_op,

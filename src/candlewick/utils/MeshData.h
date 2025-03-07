@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Utils.h"
-#include "VertexDataBlob.h"
+#include "../core/MeshLayout.h"
 #include "../core/MaterialUniform.h"
 #include "../core/Tags.h"
+
+#include <span>
+#include <SDL3/SDL_assert.h>
 #include <SDL3/SDL_gpu.h>
 
 namespace candlewick {
@@ -12,9 +15,8 @@ template <typename Derived> struct MeshDataBase {
   Derived &derived() { return static_cast<Derived &>(*this); }
   const Derived &derived() const { return static_cast<const Derived &>(*this); }
 
-  Uint32 numVertices() const {
-    return static_cast<Uint32>(derived().vertexData.size());
-  }
+  Uint32 numVertices() const { return derived().numVertices(); }
+
   Uint32 numIndices() const {
     return static_cast<Uint32>(derived().indexData.size());
   }
@@ -22,28 +24,78 @@ template <typename Derived> struct MeshDataBase {
 };
 
 struct MeshData : MeshDataBase<MeshData> {
+private:
+  std::vector<char> m_vertexData; //< Type-erased vertex data
+  Uint32 m_numVertices;           //< Actual number of vertices
+  Uint32 m_vertexSize;            //< Size of an individual vertex (in bytes)
+public:
   using IndexType = Uint32;
   SDL_GPUPrimitiveType primitiveType; //< Geometry primitive for the mesh
-  VertexDataBlob vertexData;          //< Vertices
+  MeshLayout layout;                  //< Handle to the MeshLayout
   std::vector<IndexType> indexData;   //< Indices for indexed mesh. Optional.
   PbrMaterial material;               //< PBR material
 
-  const MeshLayout &layout() const { return vertexData.layout(); }
-
   explicit MeshData(NoInitT);
+
   template <IsVertexType VertexT>
   explicit MeshData(SDL_GPUPrimitiveType primitiveType,
                     std::vector<VertexT> vertexData,
-                    std::vector<IndexType> indexData);
-  explicit MeshData(SDL_GPUPrimitiveType primitiveType, MeshLayout layout,
-                    std::vector<char> vertexData,
-                    std::vector<IndexType> indexData);
+                    std::vector<IndexType> indexData = {});
+
+  explicit MeshData(SDL_GPUPrimitiveType primitiveType,
+                    const MeshLayout &layout, std::vector<char> vertexData,
+                    std::vector<IndexType> indexData = {});
   MeshData(MeshData &&) noexcept = default;
   MeshData &operator=(MeshData &&) noexcept = default;
   MeshData &operator=(const MeshData &) noexcept = delete;
 
   /// \brief Explicit copy function, uses private copy ctor.
   static MeshData copy(const MeshData &other) { return MeshData{other}; };
+
+  /// \brief Number of individual vertices.
+  Uint32 numVertices() const noexcept { return m_numVertices; }
+  /// \brief Size of each vertex, in bytes.
+  Uint32 vertexSize() const noexcept { return m_vertexSize; }
+  /// \brief Size of the vertex data, in bytes.
+  Uint64 vertexBytes() const noexcept { return m_vertexData.size(); }
+
+  template <typename U> std::span<const U> viewAs() const {
+    const U *begin = reinterpret_cast<const U *>(m_vertexData.data());
+    return std::span<const U>(begin, m_numVertices);
+  }
+
+  template <typename U> std::span<U> viewAs() {
+    U *begin = reinterpret_cast<U *>(m_vertexData.data());
+    return std::span<U>(begin, m_numVertices);
+  }
+
+  /// \brief Access an attribute. Use this when the underlying vertex data type
+  /// is unknown.
+  template <typename T>
+  T &getAttribute(const Uint64 vertexId, const SDL_GPUVertexAttribute &attr) {
+    SDL_assert(vertexId < m_numVertices);
+    const Uint32 vtxSize = layout.vertexSize();
+    T *ptr = reinterpret_cast<T *>(m_vertexData.data() + vertexId * vtxSize +
+                                   attr.offset);
+    return *ptr;
+  }
+
+  template <typename T>
+  T &getAttribute(const Uint64 vertexId, VertexAttrib loc) {
+    auto attr = layout.getAttribute(loc);
+    if (!attr) {
+      throw std::runtime_error("Vertex attribute " +
+                               std::to_string(Uint16(loc)) + "not found.");
+    }
+    return this->getAttribute<T>(vertexId, *attr);
+  }
+
+  std::span<const char> vertexData() const { return m_vertexData; }
+
+  /// \brief Raw ptr to underlying vertex data.
+  char *data() { return m_vertexData.data(); }
+  /// \copybrief data()
+  const char *data() const { return m_vertexData.data(); }
 
 private:
   MeshData(const MeshData &) = default;
@@ -53,8 +105,11 @@ template <IsVertexType VertexT>
 MeshData::MeshData(SDL_GPUPrimitiveType primitiveType,
                    std::vector<VertexT> vertexData,
                    std::vector<IndexType> indexData)
-    : primitiveType(primitiveType), vertexData(std::move(vertexData)),
-      indexData(std::move(indexData)) {}
+    : MeshData(primitiveType, meshLayoutFor<VertexT>(),
+               std::vector<char>{reinterpret_cast<char *>(vertexData.data()),
+                                 reinterpret_cast<char *>(vertexData.data() +
+                                                          vertexData.size())},
+               std::move(indexData)) {}
 
 /// \brief Convert MeshData to a GPU Mesh object. This creates the
 /// required vertex buffer and index buffer (if required).

@@ -22,17 +22,17 @@ MeshView::MeshView(const MeshView &parent, Uint32 subVertexOffset,
   assert(subIndexOffset + subIndexCount <= parent.indexCount);
 }
 
-Mesh::Mesh(NoInitT) : layoutHandle() {}
+Mesh::Mesh(NoInitT) {}
 
-Mesh::Mesh(const Device &device, const entt::handle &layout)
-    : m_device(device), layoutHandle(layout) {
-  const Uint32 count = this->layout().numBuffers();
+Mesh::Mesh(const Device &device, const MeshLayout &layout)
+    : m_device(device), m_layout(layout) {
+  const Uint32 count = this->m_layout.numBuffers();
   vertexBuffers.resize(count, nullptr);
 }
 
 Mesh::Mesh(Mesh &&other) noexcept
     : m_device(other.m_device), m_views(std::move(other.m_views)),
-      layoutHandle(other.layoutHandle), vertexCount(other.vertexCount),
+      m_layout(other.m_layout), vertexCount(other.vertexCount),
       indexCount(other.indexCount),
       vertexBuffers(std::move(other.vertexBuffers)),
       indexBuffer(other.indexBuffer) {
@@ -48,7 +48,7 @@ Mesh &Mesh::operator=(Mesh &&other) noexcept {
 
     m_device = other.m_device;
     m_views = std::move(other.m_views);
-    layoutHandle = std::move(other.layoutHandle);
+    m_layout = std::move(other.m_layout);
     vertexCount = std::move(other.vertexCount);
     indexCount = std::move(other.indexCount);
     vertexBuffers = std::move(other.vertexBuffers);
@@ -64,7 +64,7 @@ Mesh &Mesh::operator=(Mesh &&other) noexcept {
 
 Mesh &Mesh::bindVertexBuffer(Uint32 slot, SDL_GPUBuffer *buffer) {
   for (std::size_t i = 0; i < numVertexBuffers(); i++) {
-    if (layout().m_bufferDescs[i].slot == slot) {
+    if (m_layout.m_bufferDescs[i].slot == slot) {
       if (vertexBuffers[i]) {
         throw InvalidArgument(
             "Rebinding vertex buffer to already occupied slot.");

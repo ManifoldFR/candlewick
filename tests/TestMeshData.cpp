@@ -1,5 +1,5 @@
 #include "candlewick/core/DefaultVertex.h"
-#include "candlewick/utils/VertexDataBlob.h"
+#include "candlewick/utils/MeshData.h"
 #include <gtest/gtest.h>
 
 using namespace candlewick;
@@ -19,20 +19,20 @@ GTEST_TEST(TestErasedBlob, default_vertex) {
         {Float3::Random(), Float3::Zero(), 0.5f * Float4::Random()});
   }
 
-  VertexDataBlob blob(vertexData);
-  EXPECT_EQ(blob.size(), size);
+  MeshData data(SDL_GPU_PRIMITIVETYPE_TRIANGLELIST, vertexData);
+  EXPECT_EQ(data.numVertices(), size);
 
-  std::span<const DefaultVertex> view = blob.viewAs<DefaultVertex>();
+  std::span<const DefaultVertex> view = data.viewAs<DefaultVertex>();
   EXPECT_EQ(view.size(), size);
 
   for (Uint64 i = 0; i < size; i++) {
     EXPECT_TRUE(view[i] == vertexData[i]);
     EXPECT_TRUE(vertexData[i].pos ==
-                blob.getAttribute<Float3>(i, VertexAttrib::Position));
+                data.getAttribute<Float3>(i, VertexAttrib::Position));
     EXPECT_TRUE(vertexData[i].normal ==
-                blob.getAttribute<Float3>(i, VertexAttrib::Normal));
+                data.getAttribute<Float3>(i, VertexAttrib::Normal));
     EXPECT_TRUE(vertexData[i].color ==
-                blob.getAttribute<Float4>(i, VertexAttrib::Color0));
+                data.getAttribute<Float4>(i, VertexAttrib::Color0));
   }
 }
 
@@ -72,25 +72,25 @@ GTEST_TEST(TestErasedBlob, custom_vertex) {
   EXPECT_EQ(sizeof(CustomVertex), layout.vertexSize());
 
   std::vector<CustomVertex> vertexData;
-  Uint64 size = 3;
+  const Uint64 size = 3;
   for (Uint64 i = 0; i < size; i++) {
     vertexData.push_back({Float4::Random(), Float3::Zero(), Float2::Random()});
   }
 
-  VertexDataBlob blob(vertexData);
-  EXPECT_EQ(blob.size(), size);
+  MeshData data(SDL_GPU_PRIMITIVETYPE_TRIANGLELIST, vertexData);
+  EXPECT_EQ(data.numVertices(), size);
 
-  std::span<const CustomVertex> view = blob.viewAs<CustomVertex>();
+  std::span<const CustomVertex> view = data.viewAs<CustomVertex>();
   EXPECT_EQ(view.size(), size);
 
   for (Uint64 i = 0; i < size; i++) {
     EXPECT_TRUE(view[i] == vertexData[i]);
     EXPECT_TRUE(vertexData[i].pos ==
-                blob.getAttribute<Float4>(i, VertexAttrib ::Position));
+                data.getAttribute<Float4>(i, VertexAttrib ::Position));
     EXPECT_TRUE(vertexData[i].color ==
-                blob.getAttribute<Float3>(i, VertexAttrib::Color0));
+                data.getAttribute<Float3>(i, VertexAttrib::Color0));
     EXPECT_TRUE(vertexData[i].uv ==
-                blob.getAttribute<Float2>(i, VertexAttrib::TexCoord0));
+                data.getAttribute<Float2>(i, VertexAttrib::TexCoord0));
   }
 }
 

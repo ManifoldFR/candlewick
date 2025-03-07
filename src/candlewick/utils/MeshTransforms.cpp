@@ -8,12 +8,11 @@ namespace candlewick {
 
 void apply3DTransformInPlace(MeshData &meshData, const Eigen::Affine3f &tr) {
 
-  const MeshLayout &layout = meshData.layout();
-  auto &vertexData = meshData.vertexData;
+  const MeshLayout &layout = meshData.layout;
 
   if (auto posAttr = layout.getAttribute(VertexAttrib::Position)) {
     for (Uint64 i = 0; i < meshData.numVertices(); i++) {
-      Float3 &pos = vertexData.getAttribute<Float3>(i, *posAttr);
+      Float3 &pos = meshData.getAttribute<Float3>(i, *posAttr);
       pos = tr * pos;
     }
   }
@@ -21,14 +20,14 @@ void apply3DTransformInPlace(MeshData &meshData, const Eigen::Affine3f &tr) {
   Eigen::Matrix3f normalMatrix = tr.linear().inverse().transpose();
   if (auto normAttr = layout.getAttribute(VertexAttrib::Normal)) {
     for (Uint64 i = 0; i < meshData.numVertices(); i++) {
-      Float3 &normal = vertexData.getAttribute<Float3>(i, *normAttr);
+      Float3 &normal = meshData.getAttribute<Float3>(i, *normAttr);
       normal.applyOnTheLeft(normalMatrix);
     }
   }
 
   if (auto tangAttr = layout.getAttribute(VertexAttrib::Tangent)) {
     for (Uint64 i = 0; i < meshData.numVertices(); i++) {
-      Float3 &tang = vertexData.getAttribute<Float3>(i, *tangAttr);
+      Float3 &tang = meshData.getAttribute<Float3>(i, *tangAttr);
       tang.applyOnTheLeft(normalMatrix);
     }
   }
@@ -51,8 +50,9 @@ MeshData generateIndices(const MeshData &meshData) {
   std::vector<Uint32> indices;
   Uint32 vertexCount = Uint32(meshData.numVertices());
   triangleStripGenerateIndices(vertexCount, indices);
-  std::vector<char> vertexData(meshData.vertexData);
-  return MeshData{SDL_GPU_PRIMITIVETYPE_TRIANGLELIST, meshData.layout(),
+  std::vector<char> vertexData{meshData.data(),
+                               meshData.data() + meshData.vertexBytes()};
+  return MeshData{SDL_GPU_PRIMITIVETYPE_TRIANGLELIST, meshData.layout,
                   std::move(vertexData), std::move(indices)};
 }
 
@@ -82,7 +82,7 @@ MeshData mergeMeshes(std::span<const MeshData> meshes) {
   SDL_assert(!meshes.empty());
   // 1. check coherence of primitives
   SDL_GPUPrimitiveType primitive = meshes[0].primitiveType;
-  auto layout = meshes[0].layout();
+  auto layout = meshes[0].layout;
   for (const MeshData &m : meshes) {
     SDL_assert(m.primitiveType == primitive);
   }
@@ -115,14 +115,15 @@ MeshData mergeMeshes(std::span<const MeshData> meshes) {
                 Uint32(vtxOffset));
     }
 
-    Uint64 numVtxBytes = layout.vertexSize() * mesh.numVertices();
-    std::copy_n(mesh.vertexData.data(), numVtxBytes,
+    Uint32 numVtxBytes = mesh.vertexSize() * mesh.numVertices();
+    std::copy_n(mesh.data(), numVtxBytes,
                 vertexData.begin() + vtxOffset * layout.vertexSize());
 
     vtxOffset += mesh.numVertices();
   }
 
-  return MeshData{primitive, layout, vertexData, indexData};
+  return MeshData{primitive, meshes[0].layout, std::move(vertexData),
+                  std::move(indexData)};
 }
 
 MeshData mergeMeshes(std::vector<MeshData> &&meshes) {

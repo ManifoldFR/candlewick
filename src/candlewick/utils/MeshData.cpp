@@ -3,22 +3,23 @@
 #include "../core/Mesh.h"
 #include "../core/CommandBuffer.h"
 
-#include <SDL3/SDL_assert.h>
 #include <SDL3/SDL_log.h>
 
 namespace candlewick {
 
 MeshData::MeshData(NoInitT) {}
 
-MeshData::MeshData(SDL_GPUPrimitiveType primitiveType, MeshLayout layout,
+MeshData::MeshData(SDL_GPUPrimitiveType primitiveType, const MeshLayout &layout,
                    std::vector<char> vertexData,
                    std::vector<IndexType> indexData)
-    : primitiveType(primitiveType),
-      vertexData(std::move(vertexData), std::move(layout)),
-      indexData(std::move(indexData)) {}
+    : m_vertexData(std::move(vertexData)), primitiveType(primitiveType),
+      layout(layout), indexData(std::move(indexData)) {
+  m_vertexSize = this->layout.vertexSize();
+  m_numVertices = static_cast<Uint32>(m_vertexData.size()) / m_vertexSize;
+}
 
 Mesh createMesh(const Device &device, const MeshData &meshData, bool upload) {
-  auto &layout = meshData.layout();
+  auto &layout = meshData.layout;
   SDL_GPUBufferCreateInfo vtxInfo{.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
                                   .size = meshData.numVertices() *
                                           layout.vertexSize(),
@@ -41,7 +42,7 @@ Mesh createMesh(const Device &device, const MeshData &meshData, bool upload) {
 
 Mesh createMesh(const Device &device, const MeshData &meshData,
                 SDL_GPUBuffer *vertexBuffer, SDL_GPUBuffer *indexBuffer) {
-  Mesh mesh{device, meshData.layout()};
+  Mesh mesh{device, meshData.layout};
 
   mesh.bindVertexBuffer(0, vertexBuffer);
   mesh.vertexCount = meshData.numVertices();
@@ -56,15 +57,16 @@ Mesh createMesh(const Device &device, const MeshData &meshData,
 Mesh createMeshFromBatch(const Device &device,
                          std::span<const MeshData> meshDatas, bool upload) {
   // index type size, in bytes
-  SDL_assert(meshDatas.size() > 0);
-  auto &layout = meshDatas[0].layout();
+  assert(meshDatas.size() > 0);
+  auto &layout = meshDatas[0].layout;
 
   Uint32 numVertices = 0, numIndices = 0;
   for (auto &data : meshDatas) {
     numVertices += data.numVertices();
     numIndices += data.numIndices();
   }
-  SDL_assert(layout.numBuffers() == 1);
+  Mesh mesh{device, meshDatas[0].layout};
+  assert(mesh.numVertexBuffers() == 1);
 
   SDL_GPUBufferCreateInfo vtxInfo{.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
                                   .size =
@@ -82,8 +84,6 @@ Mesh createMeshFromBatch(const Device &device,
   auto masterVertexBuffer = SDL_CreateGPUBuffer(device, &vtxInfo);
   auto masterIndexBuffer =
       (numIndices > 0) ? SDL_CreateGPUBuffer(device, &idxInfo) : NULL;
-  Mesh mesh{device, layout};
-  // SDL_assert(layout == mesh.layout);
   mesh.vertexCount = numVertices;
   mesh.indexCount = numIndices;
   mesh.bindVertexBuffer(0, masterVertexBuffer)
@@ -110,7 +110,7 @@ void uploadMeshToDevice(const Device &device, const MeshView &meshView,
   CommandBuffer upload_command_buffer{device};
   copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
 
-  auto &layout = meshData.layout();
+  auto &layout = meshData.layout;
   const Uint32 vertex_payload_size =
       meshData.numVertices() * layout.vertexSize();
   const Uint32 index_payload_size = meshData.numIndices() * layout.indexSize();
@@ -127,7 +127,7 @@ void uploadMeshToDevice(const Device &device, const MeshView &meshView,
         (std::byte *)SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
     // copy vertices
     {
-      SDL_memcpy(map, meshData.vertexData.data(), vertex_payload_size);
+      SDL_memcpy(map, meshData.data(), vertex_payload_size);
       SDL_GPUTransferBufferLocation src_location{
           .transfer_buffer = transfer_buffer,
           .offset = 0,
@@ -162,7 +162,7 @@ void uploadMeshToDevice(const Device &device, const MeshView &meshView,
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                  "%s: Failed to submit command buffer: %s", __FILE__,
                  SDL_GetError());
-    SDL_assert(false);
+    assert(false);
   }
 }
 

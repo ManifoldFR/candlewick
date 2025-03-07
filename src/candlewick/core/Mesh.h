@@ -57,9 +57,9 @@ public:
 class Mesh {
   SDL_GPUDevice *m_device{nullptr};
   std::vector<MeshView> m_views;
+  MeshLayout m_layout;
 
 public:
-  entt::handle layoutHandle;
   Uint32 vertexCount;
   Uint32 indexCount{0u};
 
@@ -77,9 +77,9 @@ public:
   /// commands are issued.
   SDL_GPUBuffer *indexBuffer{nullptr};
 
-  explicit Mesh(const Device &device, const entt::handle &layout);
+  explicit Mesh(const Device &device, const MeshLayout &layout);
 
-  const MeshLayout &layout() const { return layoutHandle.get<MeshLayout>(); }
+  const MeshLayout &layout() const { return m_layout; }
 
   Mesh(NoInitT);
   Mesh(const Mesh &) = delete;
