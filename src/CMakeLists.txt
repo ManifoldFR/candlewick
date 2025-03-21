@@ -7,6 +7,7 @@ find_package(nlohmann_json 3.11.3 REQUIRED)
 find_package(EnTT REQUIRED)
 find_package(magic_enum 0.9.7 CONFIG REQUIRED)
 find_package(FFmpeg COMPONENTS avformat avcodec swscale)
+find_package(zeromq REQUIRED)
 
 add_library(
   candlewick_core
@@ -117,6 +118,9 @@ if(BUILD_PINOCCHIO_VISUALIZER)
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
+
+  add_executable(candlewick_visualizer candlewick/runtime/main.cpp)
+  target_link_libraries(candlewick_visualizer PRIVATE candlewick_multibody)
 endif()
 
 # install headers
