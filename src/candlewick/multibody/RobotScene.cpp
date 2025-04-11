@@ -2,12 +2,10 @@
 #include "Components.h"
 #include "LoadPinocchioGeometry.h"
 #include "../core/Components.h"
-#include "../core/errors.h"
 #include "../core/Shader.h"
 #include "../core/Components.h"
 #include "../core/TransformUniforms.h"
 #include "../core/Camera.h"
-#include "../core/errors.h"
 
 #include <entt/entity/registry.hpp>
 #include <coal/BVH/BVH_model.h>
@@ -25,15 +23,6 @@ struct alignas(16) light_ubo_t {
   float intensity;
   alignas(16) GpuMat4 projMat;
 };
-
-template <typename T>
-  requires std::is_enum_v<T>
-[[noreturn]] void
-invalid_enum(const char *msg, T type,
-             std::source_location location = std::source_location::current()) {
-  terminate_with_message(
-      std::format("{:s} - {:s}", msg, magic_enum::enum_name(type)), location);
-}
 
 void updateRobotTransforms(entt::registry &registry,
                            const pin::GeometryData &geom_data) {

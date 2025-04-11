@@ -16,6 +16,19 @@
 #include <pinocchio/multibody/fwd.hpp>
 
 namespace candlewick {
+
+/// \brief Terminate the application after encountering an invalid enum value.
+template <typename T>
+  requires std::is_enum_v<T>
+[[noreturn]] void
+invalid_enum(const char *msg, T type,
+             std::source_location location = std::source_location::current()) {
+  char out[64];
+  SDL_snprintf(out, 64ul, "Invalid enum: %s - %s", msg,
+               magic_enum::enum_name(type).data());
+  terminate_with_message(out, location);
+}
+
 namespace multibody {
 
   void updateRobotTransforms(entt::registry &registry,
