@@ -383,7 +383,8 @@ void RobotScene::release() {
   if (!device())
     return;
 
-  m_registry.clear<MeshMaterialComponent>();
+  clearEnvironment();
+  clearRobotGeometries();
 
   for (auto &pipeline : renderPipelines) {
     SDL_ReleaseGPUGraphicsPipeline(device(), pipeline);
