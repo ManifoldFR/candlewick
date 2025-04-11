@@ -66,9 +66,7 @@ auto RobotScene::pinGeomToPipeline(const coal::CollisionGeometry &geom)
 void add_pipeline_tag_component(entt::registry &reg, entt::entity ent,
                                 RobotScene::PipelineType type) {
   magic_enum::enum_switch(
-      [&reg, ent](auto pt) {
-        reg.emplace<RobotScene::pipeline_tag_component<pt>>(ent);
-      },
+      [&reg, ent](auto pt) { reg.emplace<RobotScene::pipeline_tag<pt>>(ent); },
       type);
 }
 
@@ -148,11 +146,18 @@ void RobotScene::loadModels(const pin::GeometryModel &geom_model,
     const auto &geom_obj = geom_model.geometryObjects[geom_id];
     auto meshDatas = loadGeometryObject(geom_obj);
     PipelineType pipeline_type = pinGeomToPipeline(*geom_obj.geometry);
-    auto mesh = createMeshFromBatch(device(), meshDatas, true);
+    Mesh mesh = createMeshFromBatch(device(), meshDatas, true);
     SDL_assert(validateMesh(mesh));
 
-    // local copy for use
     const auto layout = mesh.layout();
+    if (!renderPipelines[pipeline_type]) {
+      SDL_Log("Building pipeline for type %s",
+              magic_enum::enum_name(pipeline_type).data());
+      renderPipelines[pipeline_type] =
+          createPipeline(layout, m_renderer.getSwapchainTextureFormat(),
+                         m_renderer.depthFormat(), pipeline_type);
+      SDL_assert(renderPipelines[pipeline_type]);
+    }
 
     // add entity for this geometry
     entt::entity entity = m_registry.create();
@@ -174,16 +179,6 @@ void RobotScene::loadModels(const pin::GeometryModel &geom_model,
             ShadowPassInfo::create(m_renderer, layout, m_config.shadow_config);
       }
     }
-
-    if (!renderPipelines[pipeline_type]) {
-      SDL_Log("Building pipeline for type %s",
-              magic_enum::enum_name(pipeline_type).data());
-      SDL_GPUGraphicsPipeline *pipeline =
-          createPipeline(layout, m_renderer.getSwapchainTextureFormat(),
-                         m_renderer.depthFormat(), pipeline_type);
-      SDL_assert(pipeline);
-      renderPipelines[pipeline_type] = pipeline;
-    }
   }
   m_initialized = true;
 }
@@ -193,11 +188,10 @@ void RobotScene::updateTransforms() {
 }
 
 void RobotScene::collectOpaqueCastables() {
-  auto all_view =
-      m_registry.view<const Opaque, const TransformComponent,
-                      const MeshMaterialComponent,
-                      pipeline_tag_component<PIPELINE_TRIANGLEMESH>>(
-          entt::exclude<Disable>);
+  auto all_view = m_registry.view<const Opaque, const TransformComponent,
+                                  const MeshMaterialComponent,
+                                  pipeline_tag<PIPELINE_TRIANGLEMESH>>(
+      entt::exclude<Disable>);
 
   m_castables.clear();
 
@@ -314,7 +308,7 @@ void RobotScene::renderPBRTriangleGeometry(CommandBuffer &command_buffer,
 
   auto all_view =
       m_registry.view<const TransformComponent, const MeshMaterialComponent,
-                      pipeline_tag_component<PIPELINE_TRIANGLEMESH>>(
+                      pipeline_tag<PIPELINE_TRIANGLEMESH>>(
           entt::exclude<Disable>);
   for (auto [ent, tr, obj] : all_view.each()) {
     const Mat4f modelView = camera.view * tr;
@@ -361,12 +355,11 @@ void RobotScene::renderOtherGeometry(CommandBuffer &command_buffer,
 
     auto env_view =
         m_registry.view<const TransformComponent, const MeshMaterialComponent,
-                        pipeline_tag_component<current_pipeline_type>>(
+                        pipeline_tag<current_pipeline_type>>(
             entt::exclude<Disable>);
-    for (auto [entity, tr, obj] : env_view.each()) {
-      auto &modelMat = tr;
+    for (auto &&[entity, tr, obj] : env_view.each()) {
       const Mesh &mesh = obj.mesh;
-      const Mat4f mvp = viewProj * modelMat;
+      const Mat4f mvp = viewProj * tr;
       const auto &color = obj.materials[0].baseColor;
       command_buffer
           .pushVertexUniform(VertexUniformSlots::TRANSFORM, &mvp, sizeof(mvp))
@@ -386,7 +379,7 @@ void RobotScene::release() {
   clearEnvironment();
   clearRobotGeometries();
 
-  for (auto &pipeline : renderPipelines) {
+  for (auto *pipeline : renderPipelines) {
     SDL_ReleaseGPUGraphicsPipeline(device(), pipeline);
     pipeline = nullptr;
   }
