@@ -273,17 +273,30 @@ int main(int argc, char **argv) {
 
   GuiSystem gui_system{
       renderer, [&](const Renderer &r) {
+        IMGUI_CHECKVERSION();
+
         static bool demo_window_open = true;
         static bool show_about_window = false;
         static bool show_plane_vis = true;
 
-        ImGui::Begin("Renderer info & controls", nullptr,
-                     ImGuiWindowFlags_AlwaysAutoResize);
+        if (show_about_window)
+          showCandlewickAboutWindow(&show_about_window);
+
+        ImGuiWindowFlags window_flags = 0;
+        window_flags |= ImGuiWindowFlags_AlwaysAutoResize;
+        window_flags |= ImGuiWindowFlags_MenuBar;
+        ImGui::Begin("Renderer info & controls", nullptr, window_flags);
+
+        if (ImGui::BeginMenuBar()) {
+          ImGui::MenuItem("About Candlewick", NULL, &show_about_window);
+          ImGui::EndMenuBar();
+        }
 
         ImGui::Text("Video driver: %s", SDL_GetCurrentVideoDriver());
+        ImGui::SameLine();
+        ImGui::Text("Device driver: %s", r.device.driverName());
         ImGui::Text("Display pixel density: %.2f / scale: %.2f",
                     r.window.pixelDensity(), r.window.displayScale());
-        ImGui::Text("Device driver: %s", r.device.driverName());
         ImGui::SeparatorText("Camera");
         bool ortho_change, persp_change;
         ortho_change = ImGui::RadioButton("Orthographic", (int *)&g_cameraType,
@@ -347,9 +360,6 @@ int main(int argc, char **argv) {
                           ImGuiColorEditFlags_AlphaPreview);
         ImGui::ColorEdit4("plane color",
                           plane_obj.materials[0].baseColor.data());
-
-        if (ImGui::Button("About candlewick"))
-          show_about_window = true;
 
         ImGui::End();
 
