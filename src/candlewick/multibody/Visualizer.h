@@ -101,11 +101,7 @@ public:
   bool shouldExit() const noexcept { return m_shouldExit; }
 
   /// \brief Clear objects
-  void clean() override {
-    robotScene.clearEnvironment();
-    robotScene.clearRobotGeometries();
-    debugScene->registry().clear();
-  }
+  void clean() override;
 
 private:
   bool m_cameraControl = true;
