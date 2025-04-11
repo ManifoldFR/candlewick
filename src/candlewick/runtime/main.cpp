@@ -18,13 +18,13 @@ int main(int argc, char **argv) {
   CLI::App app{"Candlewick visualizer runtime"};
   argv = app.ensure_utf8(argv);
 
-  std::vector<Uint32> viz_dims{1920u, 1080u};
-  app.add_option("--dims", viz_dims, "Window dimensions.")
+  std::vector<Uint32> window_dims{1920u, 1080u};
+  app.add_option("--dims", window_dims, "Window dimensions.")
       ->capture_default_str();
 
   CLI11_PARSE(app, argc, argv);
 
-  if (viz_dims.size() != 2) {
+  if (window_dims.size() != 2) {
     cdw::terminate_with_message("Expected only two values for argument --dims");
   }
 
@@ -49,8 +49,8 @@ int main(int argc, char **argv) {
   geom_model.loadFromString(recv_models[1].to_string());
 
   Visualizer::Config config;
-  config.width = viz_dims[0];
-  config.height = viz_dims[1];
+  config.width = window_dims[0];
+  config.height = window_dims[1];
   Visualizer viz{config, model, geom_model};
 
   Eigen::VectorXd q0 = pin::neutral(model);
