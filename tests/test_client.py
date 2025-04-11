@@ -1,4 +1,5 @@
 import pinocchio as pin
+import example_robot_data as erd
 import zmq
 
 
@@ -8,7 +9,11 @@ ctx = zmq.Context.instance()
 sock: zmq.Socket = ctx.socket(zmq.SocketType.PUSH)
 sock.connect(f"tcp://127.0.0.1:{PORT}")
 
-model = pin.buildSampleModelHumanoidRandom()
-geom_model = pin.buildSampleGeometryModelHumanoid(model)
+robot: pin.RobotWrapper = erd.load("solo12")
+model = robot.model
+geom_model = robot.visual_model
 
-sock.send_multipart([model.saveToString().encode(), geom_model.saveToString().encode()])
+model_str = model.saveToString()
+geom_str = geom_model.saveToString()
+sock.send_multipart([model_str.encode(), geom_str.encode()])
+print("Sent")
