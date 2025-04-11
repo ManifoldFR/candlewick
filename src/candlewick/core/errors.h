@@ -38,11 +38,9 @@ namespace detail {
 inline void terminate_with_message(
     std::string_view msg,
     std::source_location location = std::source_location::current()) {
-  SDL_LogError(
-      SDL_LOG_CATEGORY_APPLICATION, "%s",
+  throw std::runtime_error(
       detail::error_message_format(location.function_name(), "{:s}", msg)
           .c_str());
-  ::std::terminate();
 }
 
 [[noreturn]]

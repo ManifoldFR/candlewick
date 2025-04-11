@@ -120,4 +120,10 @@ void Visualizer::render() {
   cmdBuf.submit();
 }
 
+void Visualizer::clean() {
+  robotScene.clearEnvironment();
+  robotScene.clearRobotGeometries();
+  debugScene->registry().clear();
+}
+
 } // namespace candlewick::multibody

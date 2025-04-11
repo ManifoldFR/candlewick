@@ -16,6 +16,19 @@
 #include <pinocchio/multibody/fwd.hpp>
 
 namespace candlewick {
+
+/// \brief Terminate the application after encountering an invalid enum value.
+template <typename T>
+  requires std::is_enum_v<T>
+[[noreturn]] void
+invalid_enum(const char *msg, T type,
+             std::source_location location = std::source_location::current()) {
+  char out[64];
+  SDL_snprintf(out, 64ul, "Invalid enum: %s - %s", msg,
+               magic_enum::enum_name(type).data());
+  terminate_with_message(out, location);
+}
+
 namespace multibody {
 
   void updateRobotTransforms(entt::registry &registry,
@@ -27,7 +40,7 @@ namespace multibody {
   /// pinocchio::GeometryData objects.
   class RobotScene final {
     [[nodiscard]] bool hasInternalPointers() const {
-      return m_geomModel && m_geomData;
+      return (m_geomModel != nullptr) && (m_geomData != nullptr);
     }
 
     void renderPBRTriangleGeometry(CommandBuffer &command_buffer,
@@ -63,7 +76,7 @@ namespace multibody {
       }
     }
 
-    template <PipelineType t> using pipeline_tag_component = entt::tag<t>;
+    template <PipelineType t> using pipeline_tag = entt::tag<t>;
 
     struct PipelineConfig {
       // shader set
@@ -98,7 +111,7 @@ namespace multibody {
     /// \brief Non-initializing constructor.
     RobotScene(entt::registry &registry, const Renderer &renderer)
         : m_registry(registry), m_renderer(renderer), m_config(),
-          m_initialized(false) {}
+          m_geomModel(nullptr), m_geomData(nullptr), m_initialized(false) {}
 
     /// \brief Constructor which initializes the system.
     ///

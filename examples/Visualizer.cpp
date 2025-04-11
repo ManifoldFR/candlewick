@@ -10,24 +10,32 @@
 #include <CLI/Formatter.hpp>
 #include <CLI/Config.hpp>
 
+namespace cdw = candlewick;
 using namespace candlewick::multibody;
 using std::chrono::steady_clock;
 
 int main(int argc, char **argv) {
   CLI::App app{"Visualizer example"};
   argv = app.ensure_utf8(argv);
-  double fps;
+  std::vector<Uint32> window_dims{1920u, 1080u};
+  double fps = 50.0;
+  app.add_option("--dims", window_dims, "Window dimensions.")
+      ->capture_default_str();
   app.add_option<double, unsigned int>("--fps", fps, "Framerate")
-      ->default_val(50);
+      ->default_str("50.0");
 
   CLI11_PARSE(app, argc, argv);
+
+  if (window_dims.size() != 2) {
+    cdw::terminate_with_message("Expected only two values for argument --dims");
+  }
 
   pin::Model model;
   pin::GeometryModel geom_model;
   robot_descriptions::loadModelsFromToml("ur.toml", "ur5_gripper", model,
                                          &geom_model, NULL);
 
-  Visualizer visualizer{{1920, 1280}, model, geom_model};
+  Visualizer visualizer{{window_dims[0], window_dims[1]}, model, geom_model};
   assert(!visualizer.hasExternalData());
 
   Eigen::VectorXd q0 = pin::neutral(model);
