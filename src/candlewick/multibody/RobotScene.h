@@ -40,7 +40,7 @@ namespace multibody {
   /// pinocchio::GeometryData objects.
   class RobotScene final {
     [[nodiscard]] bool hasInternalPointers() const {
-      return m_geomModel && m_geomData;
+      return (m_geomModel != nullptr) && (m_geomData != nullptr);
     }
 
     void renderPBRTriangleGeometry(CommandBuffer &command_buffer,
@@ -111,7 +111,7 @@ namespace multibody {
     /// \brief Non-initializing constructor.
     RobotScene(entt::registry &registry, const Renderer &renderer)
         : m_registry(registry), m_renderer(renderer), m_config(),
-          m_initialized(false) {}
+          m_geomModel(nullptr), m_geomData(nullptr), m_initialized(false) {}
 
     /// \brief Constructor which initializes the system.
     ///
