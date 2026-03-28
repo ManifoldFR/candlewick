@@ -58,7 +58,7 @@ struct PbrMaterial_0
 
 
 #line 56
-float3 calculatePbrLighting_0(float3 normal_2, float3 V_1, float3 lightDir_0, const PbrMaterial_0 constant* material_0, float3 lightColor_0, float lightIntensity_0)
+float3 calculatePbrLighting_0(float3 normal_2, float3 V_1, float3 lightDir_0, const PbrMaterial_0 thread* material_0, float3 lightColor_0, float lightIntensity_0)
 {
 
 #line 64
@@ -98,7 +98,7 @@ float3 uncharted2ToneMapping_0(float3 color_1)
 }
 
 
-#line 10 "shaders/src/PbrTransparent.frag.slang"
+#line 12 "shaders/src/PbrTransparent.frag.slang"
 struct FSOutput_0
 {
     float4 accum_0 [[color(0)]];
@@ -106,12 +106,13 @@ struct FSOutput_0
 };
 
 
-#line 10
+#line 12
 struct pixelInput_0
 {
     float3 fragViewPos_0 [[user(_SLANG_ATTR)]];
     float3 fragViewNormal_0 [[user(_SLANG_ATTR_1)]];
     float3 fragLightPos_0 [[user(_SLANG_ATTR_2)]];
+    float2 fragTexCoord_0 [[user(_SLANG_ATTR_6)]];
 };
 
 
@@ -130,69 +131,94 @@ struct LightBlock_0
 struct KernelContext_0
 {
     PbrMaterial_0 constant* materialBlock_0;
+    texture2d<float, access::sample> baseColorTex_texture_0;
+    sampler baseColorTex_sampler_0;
     LightBlock_0 constant* light_0;
 };
 
 
-#line 16 "shaders/src/PbrTransparent.frag.slang"
-[[fragment]] FSOutput_0 main_0(pixelInput_0 _S5 [[stage_in]], float4 fragCoord_0 [[position]], PbrMaterial_0 constant* materialBlock_1 [[buffer(0)]], LightBlock_0 constant* light_1 [[buffer(1)]])
+#line 18 "shaders/src/PbrTransparent.frag.slang"
+[[fragment]] FSOutput_0 main_0(pixelInput_0 _S5 [[stage_in]], float4 fragCoord_0 [[position]], PbrMaterial_0 constant* materialBlock_1 [[buffer(0)]], texture2d<float, access::sample> baseColorTex_texture_1 [[texture(0)]], sampler baseColorTex_sampler_1 [[sampler(0)]], LightBlock_0 constant* light_1 [[buffer(1)]])
 {
+
 
     thread KernelContext_0 kernelContext_0;
 
-#line 19
+#line 22
     (&kernelContext_0)->materialBlock_0 = materialBlock_1;
 
-#line 19
+#line 22
+    (&kernelContext_0)->baseColorTex_texture_0 = baseColorTex_texture_1;
+
+#line 22
+    (&kernelContext_0)->baseColorTex_sampler_0 = baseColorTex_sampler_1;
+
+#line 22
     (&kernelContext_0)->light_0 = light_1;
     float3 _S6 = normalize(_S5.fragViewNormal_0);
     float3 _S7 = normalize(- _S5.fragViewPos_0);
 
-    PbrMaterial_0 mat_0 = *materialBlock_1;
+    thread PbrMaterial_0 mat_0 = *materialBlock_1;
+    ;
+
+#line 27
+    (&mat_0)->baseColor_0 = (&mat_0)->baseColor_0 * (((&kernelContext_0)->baseColorTex_texture_0).sample(((&kernelContext_0)->baseColorTex_sampler_0), (_S5.fragTexCoord_0)));
 
     float3 _S8 = float3(int3(int(0)) );
 
-#line 25
+#line 29
     uint i_0 = 0U;
 
-#line 25
+#line 29
     float3 Lo_0 = _S8;
     for(;;)
     {
 
-#line 26
+#line 30
         if(i_0 < uint((&kernelContext_0)->light_0->numLights_0))
         {
         }
         else
         {
 
-#line 26
+#line 30
             break;
         }
 
-#line 26
-        float3 _S9 = calculatePbrLighting_0(_S6, _S7, normalize(- (&kernelContext_0)->light_0->direction_0[i_0]), (&kernelContext_0)->materialBlock_0, (&kernelContext_0)->light_0->color_2[i_0], (&kernelContext_0)->light_0->intensity_0[i_0]);
+#line 31
+        float3 lightDir_1 = normalize(- (&kernelContext_0)->light_0->direction_0[i_0]);
+        float3 _S9 = (&kernelContext_0)->light_0->color_2[i_0];
 
-        float3 Lo_1 = Lo_0 + _S9;
+#line 32
+        float _S10 = (&kernelContext_0)->light_0->intensity_0[i_0];
 
-#line 26
+#line 32
+        thread PbrMaterial_0 _S11 = mat_0;
+
+#line 32
+        float3 _S12 = calculatePbrLighting_0(_S6, _S7, lightDir_1, &_S11, _S9, _S10);
+
+#line 32
+        float3 Lo_1 = Lo_0 + _S12;
+
+#line 30
         i_0 = i_0 + 1U;
 
-#line 26
+#line 30
         Lo_0 = Lo_1;
 
-#line 26
+#line 30
     }
 
-#line 38
-    float alpha_0 = mat_0.baseColor_0.w;
+#line 42
+    float alpha_0 = (&mat_0)->baseColor_0.w;
 
 
     float weight_0 = clamp((alpha_0 * 10.0 + 0.00999999977648258) * (1.0 - fragCoord_0.z * 0.30000001192092896), 0.00999999977648258, 1000.0);
 
     thread FSOutput_0 output_0;
-    (&output_0)->accum_0 = float4(pow(uncharted2ToneMapping_0(float3(0.02999999932944775)  * mat_0.baseColor_0.xyz * float3(mat_0.ao_0)  + Lo_0), float3(0.45454543828964233) ) * float3(alpha_0)  * float3(weight_0) , alpha_0 * weight_0);
+    (&output_0)->accum_0 = float4(pow(uncharted2ToneMapping_0(float3(0.02999999932944775)  * (&mat_0)->baseColor_0.xyz * float3((&mat_0)->ao_0)  + Lo_0), float3(0.45454543828964233) ) * float3(alpha_0)  * float3(weight_0) , alpha_0 * weight_0);
     (&output_0)->reveal_0 = alpha_0;
     return output_0;
 }
+

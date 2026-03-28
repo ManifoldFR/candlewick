@@ -7,6 +7,8 @@ import config;
 [vk::binding(0, 3)] ConstantBuffer<PbrMaterial> materialBlock;
 [vk::binding(1, 3)] ConstantBuffer<LightBlock>  light;
 
+[vk::binding(0, 2)] Sampler2D baseColorTex;
+
 struct FSOutput {
     float4 accum  : SV_Target0; // R16G16B16A16 accumulation
     float  reveal : SV_Target1; // R8 revealage
@@ -16,11 +18,13 @@ struct FSOutput {
 FSOutput main([vk::location(0)] float3 fragViewPos,
               [vk::location(1)] float3 fragViewNormal,
               [vk::location(2)] float3 fragLightPos,
+              [vk::location(6)] float2 fragTexCoord,
               float4 fragCoord : SV_Position) {
     float3 normal = normalize(fragViewNormal);
     float3 V = normalize(-fragViewPos);
 
     PbrMaterial mat = materialBlock;
+    mat.baseColor *= baseColorTex.Sample(fragTexCoord);
 
     float3 Lo = float3(0);
     for (uint i = 0; i < uint(light.numLights); i++) {

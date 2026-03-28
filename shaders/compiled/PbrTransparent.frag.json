@@ -247,6 +247,23 @@
                     "binding": {"kind": "uniform", "offset": 0, "size": 208, "elementStride": 0}
                 }
             }
+        },
+        {
+            "name": "baseColorTex",
+            "binding": {"kind": "descriptorTableSlot", "space": 2, "index": 0},
+            "type": {
+                "kind": "resource",
+                "baseShape": "texture2D",
+                "combined": true,
+                "resultType": {
+                    "kind": "vector",
+                    "elementCount": 4,
+                    "elementType": {
+                        "kind": "scalar",
+                        "scalarType": "float32"
+                    }
+                }
+            }
         }
     ],
     "entryPoints": [
@@ -287,6 +304,19 @@
                     "type": {
                         "kind": "vector",
                         "elementCount": 3,
+                        "elementType": {
+                            "kind": "scalar",
+                            "scalarType": "float32"
+                        }
+                    }
+                },
+                {
+                    "name": "fragTexCoord",
+                    "stage": "fragment",
+                    "binding": {"kind": "varyingInput", "index": 6},
+                    "type": {
+                        "kind": "vector",
+                        "elementCount": 2,
                         "elementType": {
                             "kind": "scalar",
                             "scalarType": "float32"
@@ -349,6 +379,10 @@
                 {
                     "name": "light",
                     "binding": {"kind": "descriptorTableSlot", "space": 3, "index": 1, "used": 1}
+                },
+                {
+                    "name": "baseColorTex",
+                    "binding": {"kind": "descriptorTableSlot", "space": 2, "index": 0, "used": 1}
                 }
             ]
         }

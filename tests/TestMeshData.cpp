@@ -6,7 +6,7 @@ using namespace candlewick;
 
 bool operator==(const DefaultVertex &lhs, const DefaultVertex &rhs) {
   return (lhs.pos == rhs.pos) && (lhs.normal == rhs.normal) &&
-         (lhs.color == rhs.color);
+         (lhs.color == rhs.color) && (lhs.texCoord == rhs.texCoord);
 }
 
 struct alignas(16) CustomVertex {

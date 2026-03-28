@@ -6,6 +6,7 @@
 #include "candlewick/core/Shader.h"
 #include "candlewick/utils/MeshData.h"
 #include "candlewick/utils/LoadMesh.h"
+#include "candlewick/utils/LoadTexture.h"
 #include "candlewick/core/CameraControls.h"
 #include "candlewick/core/LightUniforms.h"
 #include "candlewick/core/TransformUniforms.h"
@@ -141,6 +142,13 @@ int main() {
       .intensity = 4.0,
   };
 
+  // Load base color texture (fallback to white for untextured meshes)
+  Texture baseColorTex = meshDatas[0].baseColorTexturePath.empty()
+                             ? createWhiteTexture(device)
+                             : loadTextureFromFile(
+                                   device, meshDatas[0].baseColorTexturePath.c_str());
+  SDL_GPUSampler *materialSampler = createMaterialSampler(device);
+
   while (frameNo < 1000 && !quitRequested) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -229,6 +237,13 @@ int main() {
           .pushFragmentUniform(0u, materialUbo)
           .pushFragmentUniform(1u, lightUbo);
 
+      // Bind base color texture
+      rend::bindFragmentSamplers(render_pass, 2u,
+                                 {{
+                                     .texture = baseColorTex,
+                                     .sampler = materialSampler,
+                                 }});
+
       rend::draw(render_pass, meshes[0]);
 
       SDL_EndGPURenderPass(render_pass);
@@ -242,6 +257,8 @@ int main() {
   for (auto &mesh : meshes) {
     mesh.release();
   }
+  baseColorTex.destroy();
+  SDL_ReleaseGPUSampler(device, materialSampler);
   pipeline.release();
   ctx.destroy();
   SDL_Quit();

@@ -8,6 +8,7 @@
 #include "../core/Tags.h"
 
 #include <span>
+#include <string>
 #include <SDL3/SDL_assert.h>
 #include <SDL3/SDL_gpu.h>
 
@@ -42,6 +43,7 @@ public:
   MeshLayout layout;                  //< %Mesh layout.
   std::vector<IndexType> indexData;   //< Indices for indexed mesh. Optional.
   PbrMaterial material;               //< Mesh material.
+  std::string baseColorTexturePath;    //< Path to base color texture, if any.
 
   explicit MeshData(NoInitT);
 

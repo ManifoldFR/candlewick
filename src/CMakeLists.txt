@@ -23,6 +23,7 @@ add_library(
   candlewick/posteffects/SSAO.cpp
   candlewick/utils/LoadMesh.cpp
   candlewick/utils/LoadMaterial.cpp
+  candlewick/utils/LoadTexture.cpp
   candlewick/utils/MeshData.cpp
   candlewick/utils/MeshDataView.cpp
   candlewick/utils/MeshTransforms.cpp
