@@ -39,6 +39,7 @@ add_candlewick_example(Triangle.cpp)
 add_candlewick_example(ColoredCube.cpp)
 add_candlewick_example(MeshNormalsRgb.cpp)
 add_candlewick_example(LitMesh.cpp)
+add_candlewick_example(TexturedMesh.cpp)
 if(BUILD_PINOCCHIO_VISUALIZER)
   add_candlewick_example(
     Ur5WithSystems.cpp

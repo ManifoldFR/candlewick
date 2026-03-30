@@ -77,6 +77,28 @@ GTEST_TEST(TestTextureSupport, obj_mesh_no_texture_path) {
   }
 }
 
+// -- Loading a DAE with texture reference: path should be resolved --
+
+GTEST_TEST(TestTextureSupport, dae_mesh_has_texture_path) {
+  std::vector<MeshData> meshDatas;
+  auto ret = loadSceneMeshes(CANDLEWICK_MESH_ASSETS_DIR "/textured_quad.dae",
+                             meshDatas);
+  ASSERT_EQ(ret, mesh_load_retc::OK);
+  ASSERT_EQ(meshDatas.size(), 1u);
+
+  // Should have resolved the texture path relative to the DAE directory
+  EXPECT_FALSE(meshDatas[0].baseColorTexturePath.empty())
+      << "DAE with <diffuse><texture> should produce a texture path";
+
+  // Path should end with checkerboard.png
+  auto &path = meshDatas[0].baseColorTexturePath;
+  EXPECT_NE(path.find("checkerboard.png"), std::string::npos)
+      << "Texture path should reference checkerboard.png, got: " << path;
+
+  // Mesh should have UVs (4 vertices for the quad, triangulated to 6)
+  EXPECT_GT(meshDatas[0].numVertices(), 0u);
+}
+
 // -- Shader metadata: PbrBasic.frag now has 3 samplers --
 
 GTEST_TEST(TestTextureShaders, PbrBasic_frag_has_base_color_sampler) {

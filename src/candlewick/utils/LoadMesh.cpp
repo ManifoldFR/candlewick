@@ -41,7 +41,7 @@ MeshData loadAiMesh(const aiMesh *inMesh, const aiMatrix4x4 transform) {
     }
     if (inMesh->HasTextureCoords(0)) {
       const aiVector3D &uv = inMesh->mTextureCoords[0][vertex_id];
-      vertex.texCoord = GpuVec2{uv.x, uv.y};
+      vertex.texCoord = GpuVec2{uv.x, 1.0f - uv.y};
     }
   }
 
