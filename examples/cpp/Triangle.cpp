@@ -27,8 +27,8 @@ int main() {
     return 1;
   }
 
-  Shader vertexShader{device, "BasicTriangle.vert", {}};
-  Shader fragmentShader{device, "SolidColor.frag", {}};
+  auto vertexShader = Shader::fromMetadata(device, "BasicTriangle.vert");
+  auto fragmentShader = Shader::fromMetadata(device, "SolidColor.frag");
 
   SDL_GPUColorTargetDescription coldescs{
       .format = SDL_GetGPUSwapchainTextureFormat(device, window)};
