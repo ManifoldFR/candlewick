@@ -65,8 +65,8 @@ int main() {
   SDL_assert(meshDatas[0].numIndices() == meshes[0].indexCount);
 
   /** CREATE PIPELINE **/
-  Shader vertexShader{device, "VertexNormal.vert", {.uniform_buffers = 1}};
-  Shader fragmentShader{device, "VertexNormal.frag", {}};
+  auto vertexShader = Shader::fromMetadata(device, "VertexNormal.vert");
+  auto fragmentShader = Shader::fromMetadata(device, "VertexNormal.frag");
 
   SDL_GPUColorTargetDescription colorTarget;
   SDL_zero(colorTarget);
