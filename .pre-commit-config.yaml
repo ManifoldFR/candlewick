@@ -21,6 +21,11 @@ repos:
         exclude: ^packaging/conda/
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: |
+            (?x)^(
+                doc/doxygen-awesome.*|
+                shaders/compiled/.*
+            )$
       - id: mixed-line-ending
       - id: check-merge-conflict
       - id: trailing-whitespace
