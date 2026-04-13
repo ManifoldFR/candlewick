@@ -2,3 +2,4 @@
 ./fpng.h
 ./fpng.cpp
 ./float16_t.hpp
+./stb_image.h
