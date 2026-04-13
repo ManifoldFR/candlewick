@@ -1,7 +1,5 @@
 include(${PROJECT_SOURCE_DIR}/cmake/python.cmake)
-if(GENERATE_PYTHON_STUBS)
-  include(${PROJECT_SOURCE_DIR}/cmake/stubs.cmake)
-endif(GENERATE_PYTHON_STUBS)
+include(${PROJECT_SOURCE_DIR}/cmake/stubs.cmake)
 
 find_package(eigenpy 3.2.0 REQUIRED)
 
