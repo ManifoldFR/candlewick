@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Expose `Visualizer.toggleGui(value=None)` (https://github.com/Simple-Robotics/candlewick/pull/102)
 - Add option to set SSAO effect kernel size in Visualizer and RobotScene (C++/Python) (https://github.com/Simple-Robotics/candlewick/pull/105)
+- Support for textures in rendering (https://github.com/Simple-Robotics/candlewick/pull/111)
 
 ### Changed
 

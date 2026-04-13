@@ -10,6 +10,7 @@ struct alignas(16) DefaultVertex {
   alignas(16) GpuVec3 normal;
   alignas(16) GpuVec4 color;
   alignas(16) GpuVec3 tangent;
+  alignas(8) GpuVec2 texCoord;
 };
 static_assert(IsVertexType<DefaultVertex>, "");
 
@@ -28,7 +29,10 @@ template <> struct VertexTraits<DefaultVertex> {
                       offsetof(DefaultVertex, color))
         .addAttribute(VertexAttrib::Tangent, 0,
                       SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                      offsetof(DefaultVertex, tangent));
+                      offsetof(DefaultVertex, tangent))
+        .addAttribute(VertexAttrib::TexCoord0, 0,
+                      SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                      offsetof(DefaultVertex, texCoord));
   }
 };
 

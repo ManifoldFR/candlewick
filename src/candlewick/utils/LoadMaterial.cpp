@@ -93,4 +93,21 @@ PbrMaterial loadFromAssimpMaterial(aiMaterial *material) {
   terminate_with_message("Failed to load material: {:s}",
                          magic_enum::enum_name(retc));
 }
+std::string getBaseColorTexturePath(aiMaterial *material) {
+  if (!material)
+    return {};
+
+  aiString texPath;
+  // Try PBR base color first, then fall back to diffuse
+  if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &texPath) ==
+      aiReturn_SUCCESS) {
+    return std::string(texPath.C_Str());
+  }
+  if (material->GetTexture(aiTextureType_DIFFUSE, 0, &texPath) ==
+      aiReturn_SUCCESS) {
+    return std::string(texPath.C_Str());
+  }
+  return {};
+}
+
 } // namespace candlewick

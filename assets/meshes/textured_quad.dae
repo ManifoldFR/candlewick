@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+
+  <library_images>
+    <image id="checkerboard-img" name="checkerboard">
+      <init_from>checkerboard.png</init_from>
+    </image>
+  </library_images>
+
+  <library_effects>
+    <effect id="checkerboard-effect">
+      <profile_COMMON>
+        <newparam sid="checkerboard-surface">
+          <surface type="2D">
+            <init_from>checkerboard-img</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="checkerboard-sampler">
+          <sampler2D>
+            <source>checkerboard-surface</source>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <phong>
+            <diffuse>
+              <texture texture="checkerboard-sampler" texcoord="UVMap"/>
+            </diffuse>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+
+  <library_materials>
+    <material id="checkerboard-mat" name="Checkerboard">
+      <instance_effect url="#checkerboard-effect"/>
+    </material>
+  </library_materials>
+
+  <library_geometries>
+    <geometry id="quad-mesh" name="Quad">
+      <mesh>
+        <!-- 4 vertices: unit quad in XY plane -->
+        <source id="quad-positions">
+          <float_array id="quad-positions-array" count="12">
+            -1 -1 0   1 -1 0   1 1 0   -1 1 0
+          </float_array>
+          <technique_common>
+            <accessor source="#quad-positions-array" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <source id="quad-normals">
+          <float_array id="quad-normals-array" count="3">0 0 1</float_array>
+          <technique_common>
+            <accessor source="#quad-normals-array" count="1" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <!-- UVs: (0,0) bottom-left to (1,1) top-right (OpenGL convention) -->
+        <source id="quad-uvs">
+          <float_array id="quad-uvs-array" count="8">
+            0 0   1 0   1 1   0 1
+          </float_array>
+          <technique_common>
+            <accessor source="#quad-uvs-array" count="4" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <vertices id="quad-vertices">
+          <input semantic="POSITION" source="#quad-positions"/>
+        </vertices>
+
+        <!-- Two triangles forming the quad -->
+        <triangles material="checkerboard-mat" count="2">
+          <input semantic="VERTEX"   source="#quad-vertices" offset="0"/>
+          <input semantic="NORMAL"   source="#quad-normals"  offset="1"/>
+          <input semantic="TEXCOORD" source="#quad-uvs"      offset="2" set="0"/>
+          <p>0 0 0  1 0 1  2 0 2  0 0 0  2 0 2  3 0 3</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Quad" name="Quad" type="NODE">
+        <instance_geometry url="#quad-mesh">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="checkerboard-mat" target="#checkerboard-mat">
+                <bind_vertex_input semantic="UVMap" input_semantic="TEXCOORD" input_set="0"/>
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

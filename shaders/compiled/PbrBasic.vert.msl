@@ -3,39 +3,41 @@
 #include <metal_texture>
 using namespace metal;
 
-#line 17 "shaders/src/PbrBasic.vert.slang"
+#line 26 "shaders/src/PbrBasic.vert.slang"
 struct main_Result_0
 {
     float3 fragViewPos_0 [[user(_SLANG_ATTR)]];
     float3 fragViewNormal_0 [[user(_SLANG_ATTR_1)]];
     array<float3, int(4)> fragLightPos_0 [[user(_SLANG_ATTR_2)]];
+    float2 fragTexCoord_0 [[user(_SLANG_ATTR_6)]];
     float4 position_0 [[position]];
 };
 
 
-#line 17
+#line 26
 struct vertexInput_0
 {
     float3 inPosition_0 [[attribute(0)]];
     float3 inNormal_0 [[attribute(1)]];
+    float2 inTexCoord_0 [[attribute(6)]];
 };
 
 
-#line 17
+#line 26
 struct _MatrixStorage_float4x4_ColMajornatural_0
 {
     array<float4, int(4)> data_0;
 };
 
 
-#line 17
+#line 26
 struct _MatrixStorage_float3x3_ColMajornatural_0
 {
     array<float3, int(3)> data_1;
 };
 
 
-#line 17
+#line 26
 struct TranformBlock_natural_0
 {
     _MatrixStorage_float4x4_ColMajornatural_0 modelView_0;
@@ -65,6 +67,7 @@ struct VSOutput_0
     float3 fragViewPos_1;
     float3 fragViewNormal_1;
     array<float3, int(4)> fragLightPos_1;
+    float2 fragTexCoord_1;
     float4 position_1;
 };
 
@@ -97,44 +100,45 @@ struct KernelContext_0
     for(;;)
     {
 
-#line 28
+#line 30
         float4 hp_0 = float4(_S1.inPosition_0, 1.0);
 
-#line 27
+#line 29
         thread VSOutput_0 output_0;
 
         (&output_0)->fragViewPos_1 = (((hp_0) * (matrix<float,int(4),int(4)> ((&kernelContext_0)->transform_0->modelView_0.data_0[int(0)][int(0)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(1)][int(0)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(2)][int(0)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(3)][int(0)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(0)][int(1)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(1)][int(1)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(2)][int(1)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(3)][int(1)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(0)][int(2)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(1)][int(2)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(2)][int(2)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(3)][int(2)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(0)][int(3)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(1)][int(3)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(2)][int(3)], (&kernelContext_0)->transform_0->modelView_0.data_0[int(3)][int(3)])))).xyz;
         (&output_0)->fragViewNormal_1 = normalize((((_S1.inNormal_0) * (matrix<float,int(3),int(3)> ((&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(0)][int(0)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(1)][int(0)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(2)][int(0)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(0)][int(1)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(1)][int(1)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(2)][int(1)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(0)][int(2)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(1)][int(2)], (&kernelContext_0)->transform_0->normalMatrix_0.data_1[int(2)][int(2)])))));
         (&output_0)->position_1 = (((hp_0) * (matrix<float,int(4),int(4)> ((&kernelContext_0)->transform_0->mvp_0.data_0[int(0)][int(0)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(1)][int(0)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(2)][int(0)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(3)][int(0)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(0)][int(1)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(1)][int(1)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(2)][int(1)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(3)][int(1)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(0)][int(2)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(1)][int(2)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(2)][int(2)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(3)][int(2)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(0)][int(3)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(1)][int(3)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(2)][int(3)], (&kernelContext_0)->transform_0->mvp_0.data_0[int(3)][int(3)]))));
+        (&output_0)->fragTexCoord_1 = _S1.inTexCoord_0;
 
-#line 31
+#line 34
         uint i_0 = 0U;
 
         for(;;)
         {
 
-#line 33
+#line 36
             if(i_0 < uint((&kernelContext_0)->lights_0->numLights_0))
             {
             }
             else
             {
 
-#line 33
+#line 36
                 break;
             }
 
-#line 34
+#line 37
             float4 flps_0 = (((hp_0) * (matrix<float,int(4),int(4)> ((&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(0)][int(0)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(1)][int(0)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(2)][int(0)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(3)][int(0)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(0)][int(1)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(1)][int(1)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(2)][int(1)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(3)][int(1)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(0)][int(2)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(1)][int(2)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(2)][int(2)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(3)][int(2)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(0)][int(3)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(1)][int(3)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(2)][int(3)], (&(&kernelContext_0)->lights_0->mvp_1)->data_2[i_0].data_0[int(3)][int(3)]))));
             (&output_0)->fragLightPos_1[i_0] = flps_0.xyz / float3(flps_0.w) ;
 
-#line 33
+#line 36
             i_0 = i_0 + 1U;
 
-#line 33
+#line 36
         }
 
-#line 33
+#line 36
         _S2 = output_0;
 
 
@@ -142,21 +146,25 @@ struct KernelContext_0
         break;
     }
 
-#line 37
+#line 40
     thread main_Result_0 _S3;
 
-#line 37
+#line 40
     (&_S3)->fragViewPos_0 = _S2.fragViewPos_1;
 
-#line 37
+#line 40
     (&_S3)->fragViewNormal_0 = _S2.fragViewNormal_1;
 
-#line 37
+#line 40
     (&_S3)->fragLightPos_0 = _S2.fragLightPos_1;
 
-#line 37
+#line 40
+    (&_S3)->fragTexCoord_0 = _S2.fragTexCoord_1;
+
+#line 40
     (&_S3)->position_0 = _S2.position_1;
 
-#line 37
+#line 40
     return _S3;
 }
+

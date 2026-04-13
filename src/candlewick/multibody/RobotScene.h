@@ -68,7 +68,11 @@ namespace multibody {
       LIGHTING,
       ATLAS_INFO,
     };
-    enum FragmentSamplerSlots : Uint32 { SHADOW_MAP_SLOT, SSAO_SLOT };
+    enum FragmentSamplerSlots : Uint32 {
+      SHADOW_MAP_SLOT,
+      SSAO_SLOT,
+      BASE_COLOR_TEX_SLOT
+    };
 
     /// Map hpp-fcl/coal collision geometry to desired pipeline type.
     static PipelineType pinGeomToPipeline(const coal::CollisionGeometry &geom);
@@ -290,6 +294,8 @@ namespace multibody {
     bool m_initialized;
     PipelineManager m_pipelines;
     GraphicsPipeline m_wboitComposite{NoInit};
+    Texture m_whiteTexture{NoInit};
+    SDL_GPUSampler *m_materialSampler = nullptr;
   };
   static_assert(Scene<RobotScene>);
 

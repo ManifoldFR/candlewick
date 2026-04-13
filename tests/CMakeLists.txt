@@ -17,3 +17,11 @@ target_compile_definitions(
     CANDLEWICK_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
     CANDLEWICK_COMPILED_SHADERS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../shaders/compiled"
 )
+
+add_candlewick_test(TestTextureSupport.cpp)
+target_compile_definitions(
+  TestTextureSupport
+  PRIVATE
+    CANDLEWICK_MESH_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../assets/meshes"
+    CANDLEWICK_COMPILED_SHADERS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../shaders/compiled"
+)

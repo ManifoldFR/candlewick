@@ -5,6 +5,7 @@
 #include "../core/Components.h"
 #include "../core/TransformUniforms.h"
 #include "../core/Camera.h"
+#include "../utils/LoadTexture.h"
 
 #include <entt/entity/registry.hpp>
 #include <coal/BVH/BVH_model.h>
@@ -111,6 +112,15 @@ static void addPipelineTagComponent(entt::registry &reg, entt::entity ent,
 entt::entity RobotScene::addEnvironmentObject(MeshData &&data, Mat4f placement,
                                               PipelineType pipe_type) {
   Mesh mesh = createMesh(device(), data, true);
+
+  std::vector<Texture> textures;
+  if (!data.baseColorTexturePath.empty()) {
+    textures.push_back(
+        loadTextureFromFile(device(), data.baseColorTexturePath.c_str()));
+  } else {
+    textures.push_back(createWhiteTexture(device()));
+  }
+
   entt::entity entity = m_registry.create();
   m_registry.emplace<TransformComponent>(entity, placement);
   if (pipe_type != PIPELINE_POINTCLOUD)
@@ -118,7 +128,8 @@ entt::entity RobotScene::addEnvironmentObject(MeshData &&data, Mat4f placement,
   // add tag type
   m_registry.emplace<EnvironmentTag>(entity);
   const auto &mmc = m_registry.emplace<MeshMaterialComponent>(
-      entity, std::move(mesh), std::vector{std::move(data.material)});
+      entity, std::move(mesh), std::vector{std::move(data.material)},
+      std::move(textures));
   updateTransparencyClassification(m_registry, entity, mmc);
   addPipelineTagComponent(m_registry, entity, pipe_type);
   return entity;
@@ -141,7 +152,9 @@ RobotScene::RobotScene(entt::registry &registry, const RenderContext &renderer)
     , m_geomModel(nullptr)
     , m_geomData(nullptr)
     , m_initialized(false)
-    , m_pipelines() {
+    , m_pipelines()
+    , m_whiteTexture(createWhiteTexture(renderer.device))
+    , m_materialSampler(createMaterialSampler(renderer.device)) {
   assert(!hasInternalPointers());
   SDL_zero(directionalLight);
   directionalLight[1].direction = {-1.f, 1.f, -1.f};
@@ -358,13 +371,27 @@ void RobotScene::loadModels(const pin::GeometryModel &geom_model,
     Mesh mesh = createMeshFromBatch(device(), meshDatas, true);
     assert(validateMesh(mesh));
 
+    // Load base color textures for each sub-mesh
+    std::vector<Texture> textures;
+    textures.reserve(meshDatas.size());
+    for (const auto &md : meshDatas) {
+      if (!md.baseColorTexturePath.empty()) {
+        textures.push_back(
+            loadTextureFromFile(device(), md.baseColorTexturePath.c_str()));
+      } else {
+        // Use a copy-reference: we cannot copy Texture, so create a fresh white
+        textures.push_back(createWhiteTexture(device()));
+      }
+    }
+
     // add entity for this geometry
     entt::entity entity = m_registry.create();
     m_registry.emplace<PinGeomObjComponent>(entity, geom_id);
     m_registry.emplace<TransformComponent>(entity);
     const MeshMaterialComponent &mmc =
         m_registry.emplace<MeshMaterialComponent>(entity, std::move(mesh),
-                                                  extractMaterials(meshDatas));
+                                                  extractMaterials(meshDatas),
+                                                  std::move(textures));
     if (pipeline_type != PIPELINE_POINTCLOUD)
       m_registry.emplace<Opaque>(entity);
     bool is_transparent =
@@ -590,6 +617,10 @@ void RobotScene::renderPBRTriangleGeometry(CommandBuffer &command_buffer,
                       pipeline_tag<PIPELINE_TRIANGLEMESH>>(
           entt::exclude<Disable>);
 
+  // Transparent shader has baseColorTex as its only sampler (slot 0),
+  // opaque shader has shadow(0), ssao(1), baseColor(2).
+  const Uint32 baseColorSlot = transparent ? 0u : BASE_COLOR_TEX_SLOT;
+
   auto process_entities = [&](entt::entity ent) {
     auto [tr, obj] =
         m_registry.get<const TransformComponent, const MeshMaterialComponent>(
@@ -617,6 +648,15 @@ void RobotScene::renderPBRTriangleGeometry(CommandBuffer &command_buffer,
     for (size_t j = 0; j < mesh.numViews(); j++) {
       command_buffer.pushFragmentUniform(FragmentUniformSlots::MATERIAL,
                                          obj.materials[j]);
+      // Bind base color texture for this sub-mesh
+      SDL_GPUTexture *tex = (j < obj.baseColorTextures.size())
+                                ? (SDL_GPUTexture *)obj.baseColorTextures[j]
+                                : (SDL_GPUTexture *)m_whiteTexture;
+      rend::bindFragmentSamplers(render_pass, baseColorSlot,
+                                 {{
+                                     .texture = tex,
+                                     .sampler = m_materialSampler,
+                                 }});
       rend::drawView(render_pass, mesh.view(j));
     }
   };
@@ -710,6 +750,12 @@ void RobotScene::release() {
   gBuffer.release();
   ssaoPass.release();
   shadowPass.release();
+
+  m_whiteTexture.destroy();
+  if (m_materialSampler) {
+    SDL_ReleaseGPUSampler(device(), m_materialSampler);
+    m_materialSampler = nullptr;
+  }
 }
 
 static RobotScene::PipelineConfig

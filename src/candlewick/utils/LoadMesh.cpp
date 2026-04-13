@@ -4,6 +4,7 @@
 #include "LoadMaterial.h"
 #include "../core/DefaultVertex.h"
 
+#include <filesystem>
 #include <source_location>
 #include <spdlog/spdlog.h>
 #include <assimp/scene.h>
@@ -37,6 +38,10 @@ MeshData loadAiMesh(const aiMesh *inMesh, const aiMatrix4x4 transform) {
       aiVector3D t = inMesh->mTangents[vertex_id];
       t = normMatrix * t;
       vertex.tangent = Float3::Map(&t.x);
+    }
+    if (inMesh->HasTextureCoords(0)) {
+      const aiVector3D &uv = inMesh->mTextureCoords[0][vertex_id];
+      vertex.texCoord = GpuVec2{uv.x, 1.0f - uv.y};
     }
   }
 
@@ -82,6 +87,9 @@ mesh_load_retc loadSceneMeshes(const char *path,
   if (!scene->HasMeshes())
     return mesh_load_retc::NO_MESHES;
 
+  namespace fs = std::filesystem;
+  fs::path modelDir = fs::path(path).parent_path();
+
   aiMatrix4x4 transform = scene->mRootNode->mTransformation;
   for (std::size_t i = 0; i < scene->mNumMeshes; i++) {
     aiMesh *inMesh = scene->mMeshes[i];
@@ -90,6 +98,14 @@ mesh_load_retc loadSceneMeshes(const char *path,
     if (scene->HasMaterials()) {
       aiMaterial *material = scene->mMaterials[materialId];
       md.material = loadFromAssimpMaterial(material);
+
+      std::string texRelPath = getBaseColorTexturePath(material);
+      if (!texRelPath.empty()) {
+        fs::path texAbsPath = modelDir / texRelPath;
+        md.baseColorTexturePath = texAbsPath.string();
+        spdlog::info("Mesh {:d}: base color texture '{}'", i,
+                     md.baseColorTexturePath);
+      }
     }
   }
 

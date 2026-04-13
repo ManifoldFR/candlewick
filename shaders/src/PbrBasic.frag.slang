@@ -22,6 +22,8 @@ struct ShadowAtlasInfo {
     [vk::binding(1, 2)] Sampler2D ssaoTex;
 #endif
 
+[vk::binding(2, 2)] Sampler2D baseColorTex;
+
 struct FSOutput {
     float4 fragColor : SV_Target0;
 #ifdef HAS_G_BUFFER
@@ -66,6 +68,7 @@ float calcShadowmap(int lightIndex, float NdotL, int2 atlasSize,
 FSOutput main([vk::location(0)] float3 fragViewPos,
               [vk::location(1)] float3 fragViewNormal,
               [vk::location(2)] float3 fragLightPos[MAX_NUM_LIGHTS],
+              [vk::location(6)] float2 fragTexCoord,
               float4 fragCoord : SV_Position,
               bool isFrontFacing : SV_IsFrontFace) {
     float3 normal = normalize(fragViewNormal);
@@ -82,6 +85,7 @@ FSOutput main([vk::location(0)] float3 fragViewPos,
     }
 
     PbrMaterial mat = materialBlock;
+    mat.baseColor *= baseColorTex.Sample(fragTexCoord);
 
     float3 Lo = float3(0);
     for (int i = 0; i < light.numLights; i++) {

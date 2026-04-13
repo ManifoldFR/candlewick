@@ -211,11 +211,24 @@
                             "scalarType": "float32"
                         }
                     }
+                },
+                {
+                    "name": "inTexCoord",
+                    "stage": "vertex",
+                    "binding": {"kind": "varyingInput", "index": 6},
+                    "type": {
+                        "kind": "vector",
+                        "elementCount": 2,
+                        "elementType": {
+                            "kind": "scalar",
+                            "scalarType": "float32"
+                        }
+                    }
                 }
             ],
             "result": {
                 "stage": "vertex",
-                "binding": {"kind": "varyingOutput", "index": 0, "count": 6},
+                "binding": {"kind": "varyingOutput", "index": 0, "count": 7},
                 "type": {
                     "kind": "struct",
                     "name": "VSOutput",
@@ -262,6 +275,19 @@
                             },
                             "stage": "vertex",
                             "binding": {"kind": "varyingOutput", "index": 2, "count": 4}
+                        },
+                        {
+                            "name": "fragTexCoord",
+                            "type": {
+                                "kind": "vector",
+                                "elementCount": 2,
+                                "elementType": {
+                                    "kind": "scalar",
+                                    "scalarType": "float32"
+                                }
+                            },
+                            "stage": "vertex",
+                            "binding": {"kind": "varyingOutput", "index": 6}
                         },
                         {
                             "name": "position",

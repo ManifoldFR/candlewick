@@ -1,6 +1,7 @@
 #pragma once
 #include "math_types.h"
 #include "Mesh.h"
+#include "Texture.h"
 #include "MaterialUniform.h"
 
 #include <entt/entity/fwd.hpp>
@@ -26,9 +27,19 @@ enum class RenderMode { FILL, LINE };
 struct MeshMaterialComponent {
   Mesh mesh;
   std::vector<PbrMaterial> materials;
+  std::vector<Texture> baseColorTextures; //< One per mesh view (use white
+                                          //  fallback when no texture).
   RenderMode mode = RenderMode::FILL;
   MeshMaterialComponent(Mesh &&mesh, std::vector<PbrMaterial> &&materials)
       : mesh(std::move(mesh)), materials(std::move(materials)) {
+    assert(mesh.numViews() == materials.size());
+  }
+
+  MeshMaterialComponent(Mesh &&mesh, std::vector<PbrMaterial> &&materials,
+                        std::vector<Texture> &&textures)
+      : mesh(std::move(mesh))
+      , materials(std::move(materials))
+      , baseColorTextures(std::move(textures)) {
     assert(mesh.numViews() == materials.size());
   }
 

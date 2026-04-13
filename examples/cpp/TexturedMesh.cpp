@@ -19,23 +19,8 @@
 
 using namespace candlewick;
 
-struct TestMesh {
-  const char *filename;
-  Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-} meshes[] = {
-    {"assets/meshes/teapot.obj",
-     Eigen::Affine3f{Eigen::AngleAxisf{constants::Pi_2f, Float3{1., 0., 0.}}}},
-    {"assets/meshes/mammoth.obj",
-     Eigen::Affine3f{Eigen::UniformScaling(4.0f)}.rotate(
-         Eigen::AngleAxisf{constants::Pi_2f, Float3{1., 0., 0.}})},
-    {"assets/meshes/stanford-bunny.obj",
-     Eigen::Affine3f{Eigen::UniformScaling(12.0f)}.rotate(
-         Eigen::AngleAxisf(constants::Pi_2f, Float3{1., 0., 0.}))},
-    {"assets/meshes/cube.obj"},
-};
-
-const Uint32 wWidth = 1600;
-const Uint32 wHeight = 900;
+const Uint32 wWidth = 1024;
+const Uint32 wHeight = 768;
 const float aspectRatio = float(wWidth) / wHeight;
 
 struct light_ubo_t {
@@ -44,20 +29,31 @@ struct light_ubo_t {
   float intensity;
 };
 
-int main() {
+int main(int argc, char **argv) {
   if (!SDL_Init(SDL_INIT_VIDEO))
     return 1;
+
+  const char *meshFile = "assets/meshes/textured_quad.dae";
+  if (argc > 1)
+    meshFile = argv[1];
+
   RenderContext ctx(Device{auto_detect_shader_format_subset(), false},
-                    Window{__FILE__, wWidth, wHeight, 0},
+                    Window{"TexturedMesh", wWidth, wHeight, 0},
                     SDL_GPU_TEXTUREFORMAT_D16_UNORM);
   Device &device = ctx.device;
   SDL_Window *window = ctx.window;
-  const TestMesh test_mesh = meshes[0];
 
-  const char *basePath = SDL_GetBasePath();
-  char meshPath[256];
-  SDL_snprintf(meshPath, 256, "%s../../../%s", basePath, test_mesh.filename);
-  auto modelMat = test_mesh.transform;
+  char meshPath[512];
+  if (meshFile[0] == '/') {
+    // Absolute path — use as-is
+    SDL_snprintf(meshPath, sizeof(meshPath), "%s", meshFile);
+  } else {
+    // Relative path — resolve from project root
+    const char *basePath = SDL_GetBasePath();
+    SDL_snprintf(meshPath, sizeof(meshPath), "%s../../../%s", basePath,
+                 meshFile);
+  }
+  SDL_Log("Loading mesh: %s", meshPath);
 
   std::vector<MeshData> meshDatas;
   mesh_load_retc ret = loadSceneMeshes(meshPath, meshDatas);
@@ -67,24 +63,33 @@ int main() {
   }
   SDL_Log("Loaded %zu MeshData objects.", meshDatas.size());
   for (size_t i = 0; i < meshDatas.size(); i++) {
-    SDL_Log("Mesh %zu: %u vertices, %u indices", i, meshDatas[i].numVertices(),
-            meshDatas[i].numIndices());
+    SDL_Log("  Mesh %zu: %u vertices, %u indices, texture='%s'", i,
+            meshDatas[i].numVertices(), meshDatas[i].numIndices(),
+            meshDatas[i].baseColorTexturePath.c_str());
   }
 
   std::vector<Mesh> meshes;
-  for (std::size_t j = 0; j < meshDatas.size(); j++) {
-    Mesh mesh = createMesh(device, meshDatas[j], true);
-    meshes.push_back(std::move(mesh));
+  for (auto &md : meshDatas) {
+    meshes.push_back(createMesh(device, md, true));
   }
-  SDL_assert(meshDatas[0].numIndices() == meshes[0].indexCount);
+
+  // Load textures (or white fallback)
+  std::vector<Texture> textures;
+  for (auto &md : meshDatas) {
+    if (!md.baseColorTexturePath.empty()) {
+      textures.push_back(
+          loadTextureFromFile(device, md.baseColorTexturePath.c_str()));
+    } else {
+      textures.push_back(createWhiteTexture(device));
+    }
+  }
+  SDL_GPUSampler *materialSampler = createMaterialSampler(device);
 
   /** CREATE PIPELINE **/
   SDL_GPUDepthStencilTargetInfo depth_target_info;
   GraphicsPipeline pipeline = [&]() {
     auto vertexShader = Shader::fromMetadata(device, "PbrBasic.vert");
     auto fragmentShader = Shader::fromMetadata(device, "PbrBasic.frag");
-
-    assert(ctx.hasDepthTexture());
 
     SDL_GPUColorTargetDescription color_target_desc;
     SDL_zero(color_target_desc);
@@ -98,7 +103,6 @@ int main() {
     depth_target_info.texture = ctx.depthTarget();
     depth_target_info.cycle = true;
 
-    // create pipeline
     SDL_GPUGraphicsPipelineCreateInfo pipeline_desc{
         .vertex_shader = vertexShader,
         .fragment_shader = fragmentShader,
@@ -129,12 +133,8 @@ int main() {
   Rad<float> fov = 55.0_degf;
   CylindricalCamera camera{Camera{
       .projection = perspectiveFromFov(fov, aspectRatio, 0.01f, 10.0f),
-      .view = Eigen::Isometry3f{lookAt({6.0, 0, 3.}, Float3::Zero())},
+      .view = Eigen::Isometry3f{lookAt({0., -3., 1.5}, Float3::Zero())},
   }};
-
-  Uint32 frameNo = 0;
-  bool quitRequested = false;
-  const float pixelDensity = SDL_GetWindowPixelDensity(window);
 
   DirectionalLight myLight{
       .direction = {0., -1., 1.},
@@ -142,28 +142,34 @@ int main() {
       .intensity = 4.0,
   };
 
-  // Load base color texture (fallback to white for untextured meshes)
-  Texture baseColorTex =
-      meshDatas[0].baseColorTexturePath.empty()
-          ? createWhiteTexture(device)
-          : loadTextureFromFile(device,
-                                meshDatas[0].baseColorTexturePath.c_str());
-  SDL_GPUSampler *materialSampler = createMaterialSampler(device);
+  // Dummy texture for unbound sampler slots (shadow, SSAO)
+  Texture dummyTex = createWhiteTexture(device);
 
-  while (frameNo < 1000 && !quitRequested) {
+  // Dummy uniform data for shadow atlas (fragment uniform slot 2)
+  struct alignas(16) DummyShadowAtlas {
+    Eigen::Matrix<int, 4, 1, Eigen::DontAlign> regions[4];
+  } dummyAtlas{};
+
+  // Dummy vertex uniform for light matrices (vertex uniform slot 1)
+  struct alignas(16) DummyLightMatrices {
+    GpuMat4 mvps[4];
+    Uint32 numLights = 0;
+  } dummyLightMats{};
+
+  bool quitRequested = false;
+  const float pixelDensity = SDL_GetWindowPixelDensity(window);
+
+  while (!quitRequested) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_EVENT_QUIT) {
-        SDL_Log("Application exit requested.");
         quitRequested = true;
         break;
       }
       if (event.type == SDL_EVENT_MOUSE_WHEEL) {
         float wy = event.wheel.y;
         const float scaleFac = std::exp(kScrollZoom * wy);
-        // recreate
         fov = std::min(fov * scaleFac, Radf{170.0_degf});
-        SDL_Log("Change fov to %f", rad2deg(fov));
         camera.camera.projection =
             perspectiveFromFov(fov, aspectRatio, 0.01f, 10.0f);
       }
@@ -191,74 +197,71 @@ int main() {
         }
       }
     }
-    // MVP matrix
+
+    auto modelMat = Eigen::Affine3f::Identity();
     const Eigen::Affine3f modelView = camera.camera.view * modelMat;
     const Mat4f mvp = camera.camera.projection * modelView.matrix();
     const Mat3f normalMatrix = math::computeNormalMatrix(modelView);
 
-    // render pass
-
-    SDL_GPURenderPass *render_pass;
-
     CommandBuffer command_buffer = ctx.acquireCommandBuffer();
-    SDL_Log("Frame [%u]", frameNo);
 
     if (!ctx.waitAndAcquireSwapchain(command_buffer)) {
       SDL_Log("Failed to acquire swapchain: %s", SDL_GetError());
       break;
-    } else {
-
-      SDL_GPUColorTargetInfo ctinfo{
-          .texture = ctx.colorTarget(),
-          .clear_color = SDL_FColor{0., 0., 0., 0.},
-          .load_op = SDL_GPU_LOADOP_CLEAR,
-          .store_op = SDL_GPU_STOREOP_STORE,
-          .cycle = false,
-      };
-      render_pass = SDL_BeginGPURenderPass(command_buffer, &ctinfo, 1,
-                                           &depth_target_info);
-      pipeline.bind(render_pass);
-
-      TransformUniformData cameraUniform{
-          .modelView = modelView.matrix(),
-          .mvp = mvp,
-          .normalMatrix = normalMatrix,
-      };
-      light_ubo_t lightUbo{
-          camera.camera.transformVector(myLight.direction),
-          myLight.color,
-          myLight.intensity,
-      };
-
-      rend::bindMesh(render_pass, meshes[0]);
-
-      auto materialUbo = meshDatas[0].material;
-
-      command_buffer.pushVertexUniform(0u, cameraUniform)
-          .pushFragmentUniform(0u, materialUbo)
-          .pushFragmentUniform(1u, lightUbo);
-
-      // Bind base color texture
-      rend::bindFragmentSamplers(render_pass, 2u,
-                                 {{
-                                     .texture = baseColorTex,
-                                     .sampler = materialSampler,
-                                 }});
-
-      rend::draw(render_pass, meshes[0]);
-
-      SDL_EndGPURenderPass(render_pass);
     }
+
+    SDL_GPUColorTargetInfo ctinfo{
+        .texture = ctx.colorTarget(),
+        .clear_color = SDL_FColor{0.15f, 0.15f, 0.15f, 1.0f},
+        .load_op = SDL_GPU_LOADOP_CLEAR,
+        .store_op = SDL_GPU_STOREOP_STORE,
+        .cycle = false,
+    };
+    SDL_GPURenderPass *render_pass =
+        SDL_BeginGPURenderPass(command_buffer, &ctinfo, 1, &depth_target_info);
+    pipeline.bind(render_pass);
+
+    TransformUniformData cameraUniform{
+        .modelView = modelView.matrix(),
+        .mvp = mvp,
+        .normalMatrix = normalMatrix,
+    };
+    light_ubo_t lightUbo{
+        camera.camera.transformVector(myLight.direction),
+        myLight.color,
+        myLight.intensity,
+    };
+
+    command_buffer.pushVertexUniform(0u, cameraUniform)
+        .pushVertexUniform(1u, dummyLightMats)
+        .pushFragmentUniform(0u, meshDatas[0].material)
+        .pushFragmentUniform(1u, lightUbo)
+        .pushFragmentUniform(2u, dummyAtlas);
+
+    // Bind all 3 fragment sampler slots:
+    // slot 0 = shadow map, slot 1 = SSAO, slot 2 = base color texture
+    rend::bindFragmentSamplers(
+        render_pass, 0u,
+        {
+            {.texture = dummyTex, .sampler = materialSampler},
+            {.texture = dummyTex, .sampler = materialSampler},
+            {.texture = textures[0], .sampler = materialSampler},
+        });
+
+    rend::bindMesh(render_pass, meshes[0]);
+    rend::draw(render_pass, meshes[0]);
+
+    SDL_EndGPURenderPass(render_pass);
 
     ctx.presentToSwapchain(command_buffer);
     command_buffer.submit();
-    frameNo++;
   }
 
-  for (auto &mesh : meshes) {
+  for (auto &mesh : meshes)
     mesh.release();
-  }
-  baseColorTex.destroy();
+  for (auto &tex : textures)
+    tex.destroy();
+  dummyTex.destroy();
   SDL_ReleaseGPUSampler(device, materialSampler);
   pipeline.release();
   ctx.destroy();
