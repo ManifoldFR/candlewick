@@ -209,9 +209,18 @@ int main() {
   Mat4f projViewMat;
 
   Uint32 frame = 0;
+  bool quitRequested = false;
 
   // Main loop
-  while (frame < 1000) {
+  while (frame < 1000 && !quitRequested) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+      if (event.type == SDL_EVENT_QUIT) {
+        SDL_Log("Application exit requested.");
+        quitRequested = true;
+        break;
+      }
+    }
     SDL_GPURenderPass *render_pass;
     SDL_GPUBufferBinding vertex_binding = mesh.getVertexBinding(0);
     CommandBuffer cmdbuf{device};
