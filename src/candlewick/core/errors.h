@@ -55,8 +55,10 @@ template <typename... Ts> struct terminate_with_message {
   }
 
   [[noreturn]] terminate_with_message(std::source_location location,
-                                      std::string_view fmt, Ts &&...args)
-      : terminate_with_message(fmt, std::forward<Ts>(args)..., location) {}
+                                      std::string_view fmt, Ts &&...args) {
+    throw std::runtime_error(detail::error_message_format(
+        location.function_name(), fmt, std::forward<Ts>(args)...));
+  }
 };
 
 template <typename... Ts>
