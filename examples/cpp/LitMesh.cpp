@@ -143,10 +143,11 @@ int main() {
   };
 
   // Load base color texture (fallback to white for untextured meshes)
-  Texture baseColorTex = meshDatas[0].baseColorTexturePath.empty()
-                             ? createWhiteTexture(device)
-                             : loadTextureFromFile(
-                                   device, meshDatas[0].baseColorTexturePath.c_str());
+  Texture baseColorTex =
+      meshDatas[0].baseColorTexturePath.empty()
+          ? createWhiteTexture(device)
+          : loadTextureFromFile(device,
+                                meshDatas[0].baseColorTexturePath.c_str());
   SDL_GPUSampler *materialSampler = createMaterialSampler(device);
 
   while (frameNo < 1000 && !quitRequested) {

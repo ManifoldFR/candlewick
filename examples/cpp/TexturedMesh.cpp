@@ -192,9 +192,8 @@ int main(int argc, char **argv) {
         }
         if (mouseButton >= SDL_BUTTON_RMASK) {
           float camXLocRotSpeed = 0.01f * pixelDensity;
-          camera_util::localRotateXAroundOrigin(camera,
-                                                camXLocRotSpeed *
-                                                    event.motion.yrel);
+          camera_util::localRotateXAroundOrigin(camera, camXLocRotSpeed *
+                                                            event.motion.yrel);
         }
       }
     }
@@ -241,15 +240,13 @@ int main(int argc, char **argv) {
 
     // Bind all 3 fragment sampler slots:
     // slot 0 = shadow map, slot 1 = SSAO, slot 2 = base color texture
-    rend::bindFragmentSamplers(render_pass, 0u,
-                               {
-                                   {.texture = dummyTex,
-                                    .sampler = materialSampler},
-                                   {.texture = dummyTex,
-                                    .sampler = materialSampler},
-                                   {.texture = textures[0],
-                                    .sampler = materialSampler},
-                               });
+    rend::bindFragmentSamplers(
+        render_pass, 0u,
+        {
+            {.texture = dummyTex, .sampler = materialSampler},
+            {.texture = dummyTex, .sampler = materialSampler},
+            {.texture = textures[0], .sampler = materialSampler},
+        });
 
     rend::bindMesh(render_pass, meshes[0]);
     rend::draw(render_pass, meshes[0]);

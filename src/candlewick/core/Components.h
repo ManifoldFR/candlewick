@@ -36,9 +36,10 @@ struct MeshMaterialComponent {
   }
 
   MeshMaterialComponent(Mesh &&mesh, std::vector<PbrMaterial> &&materials,
-                         std::vector<Texture> &&textures)
-      : mesh(std::move(mesh)), materials(std::move(materials)),
-        baseColorTextures(std::move(textures)) {
+                        std::vector<Texture> &&textures)
+      : mesh(std::move(mesh))
+      , materials(std::move(materials))
+      , baseColorTextures(std::move(textures)) {
     assert(mesh.numViews() == materials.size());
   }
 

@@ -389,9 +389,9 @@ void RobotScene::loadModels(const pin::GeometryModel &geom_model,
     m_registry.emplace<PinGeomObjComponent>(entity, geom_id);
     m_registry.emplace<TransformComponent>(entity);
     const MeshMaterialComponent &mmc =
-        m_registry.emplace<MeshMaterialComponent>(
-            entity, std::move(mesh), extractMaterials(meshDatas),
-            std::move(textures));
+        m_registry.emplace<MeshMaterialComponent>(entity, std::move(mesh),
+                                                  extractMaterials(meshDatas),
+                                                  std::move(textures));
     if (pipeline_type != PIPELINE_POINTCLOUD)
       m_registry.emplace<Opaque>(entity);
     bool is_transparent =
