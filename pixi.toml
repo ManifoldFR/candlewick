@@ -74,7 +74,8 @@ release-new-version = { cmd = "VERSION=$CANDLEWICK_VERSION cmake --build build-n
 ] }
 
 [feature.pinocchio.dependencies]
-pinocchio = ">=3.5"
+pinocchio = ">=3.9.0,<4"
+example-robot-data = ">=4.4.0,<5"
 
 [feature.pinocchio.activation]
 env = { CANDLEWICK_WITH_PINOCCHIO = "ON" }
